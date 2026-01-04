@@ -487,7 +487,7 @@ LLM: [Calls explore({"sheet": "ACTIVE"}, mode="quick")]
 
 ---
 
-### 10. `delete(workbook_name, sheet_name, delete_type, position, count)` ⭐ NEW
+### 10. `delete(workbook_name, sheet_name, delete_type, position, count)`
 
 Delete rows or columns at a specific position.
 
@@ -518,7 +518,7 @@ LLM: [Calls delete("data.xlsx", "Sheet1", "row", "10:15")]
 
 ---
 
-### 11. `copy_range(source_workbook, source_sheet, source_range, ...)` ⭐ NEW
+### 11. `copy_range(source_workbook, source_sheet, source_range, ...)`
 
 Copy data between ranges, sheets, or workbooks.
 
@@ -550,7 +550,7 @@ LLM: [Calls copy_range("data.xlsx", "Sheet1", "A1:D10", target_sheet="Sheet2", t
 
 ---
 
-### 12. `sort_range(workbook_name, sheet_name, range, sort_by, has_header)` ⭐ NEW
+### 12. `sort_range(workbook_name, sheet_name, range, sort_by, has_header)`
 
 Sort data in a range by one or more columns.
 
@@ -581,7 +581,7 @@ LLM: [Calls sort_range("data.xlsx", "Sheet1", "A1:D100",
 
 ---
 
-### 13. `find_replace(workbook_name, find_value, replace_value, ...)` ⭐ NEW
+### 13. `find_replace(workbook_name, find_value, replace_value, ...)`
 
 Find and replace values in a sheet or workbook.
 
@@ -889,7 +889,7 @@ await read(workbook_name="report.xlsx", ...)
 - `insert()` - Insert rows/columns
 - `delete()` - Delete rows/columns
 
-### 📊 Tables (NEW)
+### 📊 Tables
 - `create_table()` - Create Excel table objects
 - `list_tables()` - List all tables
 - `delete_table()` - Remove tables
@@ -1008,12 +1008,12 @@ ExceLLM/
 │       ├── excel_session.py       # Excel COM session manager
 │       ├── validators.py          # Input validation utilities
 │       ├── filters.py             # Filter engine for search
-│       ├── core/                  # Shared foundation (NEW)
+│       ├── core/                  # Shared foundation
 │       │   ├── __init__.py
 │       │   ├── connection.py     # COM pooling, batch reads
 │       │   ├── errors.py         # ToolError, ErrorCodes
 │       │   └── utils.py          # Consolidated utilities
-│       ├── tools/                 # Tool implementations (NEW)
+│       ├── tools/                 # Tool implementations
 │       │   ├── readers.py        # read_cell, read_range
 │       │   ├── writers.py        # write_cell, write_range
 │       │   ├── formatters.py     # format, get_format
@@ -1150,10 +1150,10 @@ For issues, questions, or contributions:
 ### 2.0.0-alpha (2026-01-04)
 - **Major Update**: Dual-engine architecture (COM + File-based)
 - **25 MCP tools** (up from 20)
-- **NEW**: VBA execution support
-- **NEW**: Screen capture functionality
-- **NEW**: Excel table operations
-- **NEW**: Cross-platform file mode (Mac/Linux)
+- VBA execution support
+- Screen capture functionality
+- Excel table operations
+- Cross-platform file mode (Mac/Linux)
 - Enhanced session management for large datasets
 - Workflow guidance markers
 - Comprehensive error handling
