@@ -16,6 +16,9 @@ from .writers import (
 from .formatters import (
     format_range_sync,
     get_format_sync,
+    merge_cells_sync,
+    unmerge_cells_sync,
+    get_merged_cells_sync,
 )
 from .sheet_mgmt import (
     manage_sheet_sync,
@@ -53,6 +56,17 @@ from .table_ops import (
     list_tables_sync,
     delete_table_sync,
 )
+from .chart import (
+    create_chart_sync,
+    list_charts_sync,
+    delete_chart_sync,
+)
+from .pivot import (
+    create_pivot_table_sync,
+    refresh_pivot_table_sync,
+    list_pivot_tables_sync,
+    delete_pivot_table_sync,
+)
 
 __all__ = [
     # Readers
@@ -66,6 +80,9 @@ __all__ = [
     # Formatters
     "format_range_sync",
     "get_format_sync",
+    "merge_cells_sync",
+    "unmerge_cells_sync",
+    "get_merged_cells_sync",
     # Sheet Management
     "manage_sheet_sync",
     "insert_sync",
@@ -94,5 +111,15 @@ __all__ = [
     "create_table_sync",
     "list_tables_sync",
     "delete_table_sync",
+    # Chart Operations
+    "create_chart_sync",
+    "list_charts_sync",
+    "delete_chart_sync",
+    # Pivot Table Operations
+    "create_pivot_table_sync",
+    "refresh_pivot_table_sync",
+    "list_pivot_tables_sync",
+    "delete_pivot_table_sync",
 ]
+
 

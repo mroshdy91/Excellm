@@ -26,6 +26,9 @@ from .tools import (
     # Formatters
     format_range_sync,
     get_format_sync,
+    merge_cells_sync,
+    unmerge_cells_sync,
+    get_merged_cells_sync,
     # Sheet Management
     manage_sheet_sync,
     insert_sync,
@@ -53,6 +56,15 @@ from .tools import (
     create_table_sync,
     list_tables_sync,
     delete_table_sync,
+    # Chart Operations (NEW)
+    create_chart_sync,
+    list_charts_sync,
+    delete_chart_sync,
+    # Pivot Table Operations (NEW)
+    create_pivot_table_sync,
+    refresh_pivot_table_sync,
+    list_pivot_tables_sync,
+    delete_pivot_table_sync,
 )
 from .inspection import inspect_workbook_sync, explore_sync
 
@@ -469,6 +481,7 @@ async def format(
     reference: str,
     style: str = None,
     format: dict = None,
+    conditional_format: dict = None,
     activate: bool = True,
 ) -> dict:
     """Apply formatting to cells/ranges in Excel.
@@ -479,6 +492,11 @@ async def format(
         reference: Cell/range reference
         style: Predefined style (header, currency, percent, warning, success, border, center, wrap)
         format: Custom format properties
+        conditional_format: Conditional formatting rules with type:
+            - colorScale: {type: "colorScale", min_color: "FF0000", max_color: "00FF00"}
+            - dataBar: {type: "dataBar", bar_color: "638EC6"}
+            - iconSet: {type: "iconSet", icon_style: "3trafficlights"}
+            - cellIs: {type: "cellIs", operator: "greaterThan", value: 100, fill_color: "FFEB9C"}
         activate: If True, activate after formatting
 
     Returns:
@@ -486,7 +504,7 @@ async def format(
     """
     try:
         result = await asyncio.to_thread(
-            format_range_sync, workbook_name, sheet_name, reference, style, format, activate
+            format_range_sync, workbook_name, sheet_name, reference, style, format, conditional_format, activate
         )
         return result
     except Exception as e:
@@ -1128,6 +1146,206 @@ async def delete_table(
         if isinstance(e, ToolError):
             raise
         raise ToolError(f"Failed to delete table: {str(e)}") from e
+
+
+# ============================================================================
+# NEW TOOLS - Charts, Pivot Tables, Cell Merging, Formula Validation
+# ============================================================================
+
+
+@mcp.tool()
+async def create_chart(
+    workbook_name: str,
+    sheet_name: str,
+    data_range: str,
+    chart_type: str,
+    target_cell: str,
+    title: str = "",
+    x_axis_title: str = "",
+    y_axis_title: str = "",
+    width: float = 400,
+    height: float = 300,
+    style: dict = None,
+) -> dict:
+    """📊 Create a chart in an Excel worksheet.
+    
+    Args:
+        workbook_name: Name of open workbook
+        sheet_name: Name of worksheet
+        data_range: Source data range (e.g., "A1:D10")
+        chart_type: Type of chart (line, bar, pie, scatter, area)
+        target_cell: Cell where chart will be placed
+        title: Chart title
+        x_axis_title: X-axis label
+        y_axis_title: Y-axis label
+        width: Chart width in points
+        height: Chart height in points
+        style: Optional style configuration
+        
+    Returns:
+        Dictionary with chart details
+    """
+    try:
+        result = await asyncio.to_thread(
+            create_chart_sync,
+            workbook_name, sheet_name, data_range, chart_type,
+            target_cell, title, x_axis_title, y_axis_title, width, height, style
+        )
+        return result
+    except Exception as e:
+        if isinstance(e, ToolError):
+            raise
+        raise ToolError(f"Failed to create chart: {str(e)}") from e
+
+
+@mcp.tool()
+async def create_pivot_table(
+    workbook_name: str,
+    sheet_name: str,
+    data_range: str,
+    rows: List[str],
+    values: List[str],
+    columns: List[str] = None,
+    agg_func: str = "sum",
+    target_sheet: str = None,
+    target_cell: str = "A1",
+    table_name: str = None,
+) -> dict:
+    """📊 Create a pivot table from source data.
+    
+    Args:
+        workbook_name: Name of open workbook
+        sheet_name: Name of worksheet with source data
+        data_range: Source data range (e.g., "A1:D100")
+        rows: Fields for row labels (column headers)
+        values: Fields for values to aggregate
+        columns: Optional fields for column labels
+        agg_func: Aggregation function (sum, count, average, max, min)
+        target_sheet: Sheet for pivot table (default: creates new sheet)
+        target_cell: Cell for pivot table location
+        table_name: Optional name for the pivot table
+        
+    Returns:
+        Dictionary with pivot table details
+    """
+    try:
+        result = await asyncio.to_thread(
+            create_pivot_table_sync,
+            workbook_name, sheet_name, data_range, rows, values,
+            columns, agg_func, target_sheet, target_cell, table_name
+        )
+        return result
+    except Exception as e:
+        if isinstance(e, ToolError):
+            raise
+        raise ToolError(f"Failed to create pivot table: {str(e)}") from e
+
+
+@mcp.tool()
+async def merge_cells(
+    workbook_name: str,
+    sheet_name: str,
+    start_cell: str,
+    end_cell: str,
+) -> dict:
+    """Merge a range of cells.
+    
+    Args:
+        workbook_name: Name of open workbook
+        sheet_name: Name of worksheet
+        start_cell: Starting cell (e.g., "A1")
+        end_cell: Ending cell (e.g., "D1")
+        
+    Returns:
+        Dictionary with operation result
+    """
+    try:
+        result = await asyncio.to_thread(
+            merge_cells_sync, workbook_name, sheet_name, start_cell, end_cell
+        )
+        return result
+    except Exception as e:
+        if isinstance(e, ToolError):
+            raise
+        raise ToolError(f"Failed to merge cells: {str(e)}") from e
+
+
+@mcp.tool()
+async def unmerge_cells(
+    workbook_name: str,
+    sheet_name: str,
+    start_cell: str,
+    end_cell: str,
+) -> dict:
+    """Unmerge a previously merged range of cells.
+    
+    Args:
+        workbook_name: Name of open workbook
+        sheet_name: Name of worksheet
+        start_cell: Starting cell (e.g., "A1")
+        end_cell: Ending cell (e.g., "D1")
+        
+    Returns:
+        Dictionary with operation result
+    """
+    try:
+        result = await asyncio.to_thread(
+            unmerge_cells_sync, workbook_name, sheet_name, start_cell, end_cell
+        )
+        return result
+    except Exception as e:
+        if isinstance(e, ToolError):
+            raise
+        raise ToolError(f"Failed to unmerge cells: {str(e)}") from e
+
+
+@mcp.tool()
+async def get_merged_cells(
+    workbook_name: str,
+    sheet_name: str,
+) -> dict:
+    """Get all merged cell ranges in a worksheet.
+    
+    Args:
+        workbook_name: Name of open workbook
+        sheet_name: Name of worksheet
+        
+    Returns:
+        Dictionary with list of merged ranges
+    """
+    try:
+        result = await asyncio.to_thread(
+            get_merged_cells_sync, workbook_name, sheet_name
+        )
+        return result
+    except Exception as e:
+        if isinstance(e, ToolError):
+            raise
+        raise ToolError(f"Failed to get merged cells: {str(e)}") from e
+
+
+@mcp.tool()
+async def validate_formula(
+    formula: str,
+) -> dict:
+    """Validate Excel formula syntax without applying it.
+    
+    Checks for balanced parentheses, valid function names, and common errors.
+    
+    Args:
+        formula: Formula string to validate (e.g., "=SUM(A1:A10)")
+        
+    Returns:
+        Dictionary with:
+        {
+            "valid": bool,
+            "error": str or None,
+            "warnings": list of str,
+            "functions_used": list of str
+        }
+    """
+    from .validators import validate_formula_sync
+    return validate_formula_sync(formula)
 
 
 # ============================================================================

@@ -5,12 +5,15 @@ A Model Context Protocol (MCP) server for Excel automation with dual-engine supp
 ## Features
 
 - ✅ **Dual-Engine Architecture**: Live Excel (Windows COM) or file-based (cross-platform)
-- ✅ **25 MCP Tools**: Comprehensive Excel automation toolkit
+- ✅ **33 MCP Tools**: Comprehensive Excel automation toolkit
 - ✅ **Real-Time Excel Operations**: Work with files open in Excel (Windows)
 - ✅ **Cross-Platform File Mode**: Work with .xlsx files on Windows, Mac, Linux
+- ✅ **Charts & Pivot Tables**: Native Excel chart and pivot table creation
 - ✅ **VBA Execution**: Execute custom macros (Windows only)
 - ✅ **Screen Capture**: Visual verification of changes (Windows only)
 - ✅ **Excel Tables**: Create, list, delete table objects
+- ✅ **Cell Merging**: Merge, unmerge, and query merged cells
+- ✅ **Formula Validation**: Validate syntax before applying
 - ✅ **Session Management**: Process large datasets with chunking
 - ✅ **Advanced Search & Filtering**: Find and filter data efficiently
 - ✅ **LLM-Optimized**: Workflow guidance and structured responses
@@ -194,19 +197,37 @@ Apply styles (color, bold, number format) to ranges.
 Read formatting properties of a range.
 **Usage:** `await get_format("data.xlsx", "Sheet1", "A1")`
 
+#### 15. `merge_cells(workbook_name, sheet_name, start_cell, end_cell)`
+Merge a range of cells.
+**Usage:** `await merge_cells("data.xlsx", "Sheet1", "A1", "D1")`
+
+#### 16. `unmerge_cells(workbook_name, sheet_name, start_cell, end_cell)`
+Unmerge previously merged cells.
+**Usage:** `await unmerge_cells("data.xlsx", "Sheet1", "A1", "D1")`
+
+#### 17. `get_merged_cells(workbook_name, sheet_name)`
+List all merged cell ranges in a sheet.
+**Usage:** `await get_merged_cells("data.xlsx", "Sheet1")`
+
+> **💡 Conditional Formatting:** The `format` tool now supports `conditional_format` parameter:
+> - ColorScale: `{type: "colorScale", min_color: "FF0000", max_color: "00FF00"}`
+> - DataBar: `{type: "dataBar", bar_color: "638EC6"}`
+> - IconSet: `{type: "iconSet", icon_style: "3trafficlights"}`
+> - CellIs: `{type: "cellIs", operator: "greaterThan", value: 100, fill_color: "FFEB9C"}`
+
 ---
 
 ### 📋 Sheet & Structure Management
 
-#### 15. `manage_sheet(workbook_name, action, sheet_name, ...)`
+#### 18. `manage_sheet(workbook_name, action, sheet_name, ...)`
 Add, rename, delete, hide, copy, or move worksheets.
 **Usage:** `await manage_sheet("data.xlsx", action="add", sheet_name="NewSheet")`
 
-#### 16. `insert(workbook_name, sheet_name, insert_type, position, count)`
+#### 19. `insert(workbook_name, sheet_name, insert_type, position, count)`
 Insert rows or columns.
 **Usage:** `await insert("data.xlsx", "Sheet1", "row", "5", count=2)`
 
-#### 17. `delete(workbook_name, sheet_name, delete_type, position, count)`
+#### 20. `delete(workbook_name, sheet_name, delete_type, position, count)`
 Delete rows or columns.
 **Usage:** `await delete("data.xlsx", "Sheet1", "column", "C")`
 
@@ -214,33 +235,53 @@ Delete rows or columns.
 
 ### 📊 Excel Tables
 
-#### 18. `create_table(workbook_name, sheet_name, range_ref, table_name)`
+#### 21. `create_table(workbook_name, sheet_name, range_ref, table_name)`
 Convert a range into an official Excel Table (ListObject).
 **Usage:** `await create_table("data.xlsx", "Sheet1", "A1:D10", "SalesTable")`
 
-#### 19. `list_tables(workbook_name)`
+#### 22. `list_tables(workbook_name)`
 List all tables in the workbook.
 **Usage:** `await list_tables("data.xlsx")`
 
-#### 20. `delete_table(workbook_name, sheet_name, table_name, keep_data)`
+#### 23. `delete_table(workbook_name, sheet_name, table_name, keep_data)`
 Remove table structure, optionally keeping data.
 **Usage:** `await delete_table("data.xlsx", "Sheet1", "SalesTable")`
 
 ---
 
+### 📈 Charts & Pivot Tables
+
+#### 24. `create_chart(workbook_name, sheet_name, data_range, chart_type, target_cell, ...)`
+Create charts (line, bar, pie, scatter, area) from data.
+- **Live Mode:** Native Excel chart automation.
+- **File Mode:** Basic chart creation via openpyxl.
+**Usage:** `await create_chart("data.xlsx", "Sheet1", "A1:D10", "bar", "F1", title="Sales")`
+
+#### 25. `create_pivot_table(workbook_name, sheet_name, data_range, rows, values, ...)`
+Create pivot tables with aggregation.
+- **Live Mode:** Native interactive Excel pivot table.
+- **File Mode:** Static summary table (calculated in Python).
+**Usage:** `await create_pivot_table("data.xlsx", "Sheet1", "A1:D100", rows=["Category"], values=["Amount"], agg_func="sum")`
+
+---
+
 ### ⚙️ Advanced Features
 
-#### 21. `execute_vba(workbook_name, vba_code)`
+#### 26. `execute_vba(workbook_name, vba_code)`
 Run custom VBA macros (Windows only).
 **Usage:** `await execute_vba("data.xlsx", "Range('A1').Value = 'VBA'")`
 
-#### 22. `capture_sheet(workbook_name, sheet_name, range_ref)`
+#### 27. `capture_sheet(workbook_name, sheet_name, range_ref)`
 Take a screenshot of a range (Windows only).
 **Usage:** `await capture_sheet("data.xlsx", "Sheet1", "A1:H10")`
 
-#### 23. `validate_cell_reference(cell)`
+#### 28. `validate_cell_reference(cell)`
 Utility to check if a reference string is valid.
 **Usage:** `await validate_cell_reference("A1")`
+
+#### 29. `validate_formula(formula)`
+Validate Excel formula syntax without applying it.
+**Usage:** `await validate_formula("=SUM(A1:A10)")`
 
 ---
 
@@ -248,19 +289,19 @@ Utility to check if a reference string is valid.
 
 For handling large datasets (>50 rows) safely.
 
-#### 24. `create_transform_session(...)`
+#### 30. `create_transform_session(...)`
 Start a session to process data in chunks.
 **Usage:** `await create_transform_session("data.xlsx", "Sheet1", "A", "B")`
 
-#### 25. `process_chunk(session_id, data)`
+#### 31. `process_chunk(session_id, data)`
 Submit processed data for the current chunk.
 **Usage:** `await process_chunk("session_123", [[1, 2], [3, 4]])`
 
-#### 26. `get_session_status(session_id)`
+#### 32. `get_session_status(session_id)`
 Check progress of a session.
 **Usage:** `await get_session_status("session_123")`
 
-#### 27. `create_parallel_sessions(...)`
+#### 33. `create_parallel_sessions(...)`
 Split work for parallel sub-agents.
 **Usage:** `await create_parallel_sessions("data.xlsx", "Sheet1", "A", "B")`  "success": true,
   "total_matches": 15,
@@ -508,7 +549,7 @@ ExceLLM now supports two operation modes:
 ### File Mode (Cross-platform)
 - **Platform:** Windows, Mac, Linux
 - **Requires:** openpyxl library (no Excel needed)
-- **Features:** Core operations (read, write, format, sheets)
+- **Features:** Core operations + Charts + Pivot Summaries
 - **Use when:** Working with closed .xlsx files, or on Mac/Linux
 
 **Auto-Detection:**
@@ -767,8 +808,9 @@ mypy src/
 - **Limited Formatting**: Basic font, fill, and borders only
 - **No VBA**: Cannot execute macros
 - **No Screen Capture**: Cannot generate screenshots
-- **No Conditional Formatting**: Not supported
-- **Charts Limited**: Basic chart support only
+- **No Conditional Formatting**: Not supported (COM only)
+- **Charts**: Supported (5 types)
+- **Pivot Tables**: Static summary tables only (no drill-down)
 
 ### General
 - **Large Datasets**: For best performance, use session management for >100 rows
@@ -813,6 +855,6 @@ For issues, questions, or contributions:
 
 ### 1.0.0-alpha (2026-01-04)
 - Initial alpha release
-- 27 MCP tools for Excel automation
+- 33 MCP tools for Excel automation
 - Dual-engine architecture (COM + File-based)
 - Cross-platform support (Windows, Mac, Linux)

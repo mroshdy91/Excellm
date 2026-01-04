@@ -89,6 +89,7 @@ dmypy.json
 # Development/Test files
 test_*.xlsx
 *_test.xlsx
+test_results.txt
 temp_*.py
 scratch_*.py
 

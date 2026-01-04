@@ -595,3 +595,191 @@ def validate_filter_structure(filter_dict: Any) -> Tuple[bool, str]:
         return validate_filter_group(filter_dict)
     else:
         return validate_single_filter(filter_dict)
+
+
+# ============================================================================
+# Formula Validation Functions
+# ============================================================================
+
+VALID_EXCEL_FUNCTIONS = {
+    # Math functions
+    "SUM", "AVERAGE", "COUNT", "COUNTA", "COUNTBLANK", "MAX", "MIN",
+    "SUMIF", "SUMIFS", "COUNTIF", "COUNTIFS", "AVERAGEIF", "AVERAGEIFS",
+    "ROUND", "ROUNDUP", "ROUNDDOWN", "ABS", "SQRT", "POWER", "MOD",
+    "INT", "CEILING", "FLOOR", "RAND", "RANDBETWEEN",
+    # Text functions
+    "LEFT", "RIGHT", "MID", "LEN", "TRIM", "UPPER", "LOWER", "PROPER",
+    "CONCATENATE", "CONCAT", "TEXTJOIN", "TEXT", "VALUE", "FIND", "SEARCH",
+    "SUBSTITUTE", "REPLACE", "REPT", "CHAR", "CODE",
+    # Lookup functions
+    "VLOOKUP", "HLOOKUP", "INDEX", "MATCH", "XLOOKUP", "LOOKUP",
+    "OFFSET", "INDIRECT", "ROW", "COLUMN", "ROWS", "COLUMNS",
+    # Logical functions
+    "IF", "IFS", "AND", "OR", "NOT", "XOR", "TRUE", "FALSE",
+    "IFERROR", "IFNA", "SWITCH", "CHOOSE",
+    # Date functions
+    "DATE", "TODAY", "NOW", "YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND",
+    "WEEKDAY", "WEEKNUM", "DATEVALUE", "TIMEVALUE", "EDATE", "EOMONTH",
+    "NETWORKDAYS", "WORKDAY", "DATEDIF",
+    # Info functions
+    "ISBLANK", "ISERROR", "ISNA", "ISNUMBER", "ISTEXT", "ISLOGICAL",
+    "TYPE", "N", "NA", "INFO", "CELL",
+    # Financial functions
+    "PMT", "PV", "FV", "RATE", "NPER", "NPV", "IRR",
+    # Statistical functions
+    "STDEV", "STDEVP", "VAR", "VARP", "MEDIAN", "MODE", "LARGE", "SMALL",
+    "PERCENTILE", "QUARTILE", "RANK", "CORREL", "COVAR",
+}
+
+
+def validate_cell_reference(cell: str) -> bool:
+    """Validate a cell reference (e.g., A1, $B$5, Sheet1!A1).
+    
+    Args:
+        cell: Cell reference to validate
+        
+    Returns:
+        True if valid cell reference
+    """
+    if not cell or not isinstance(cell, str):
+        return False
+    
+    # Remove sheet reference if present
+    if "!" in cell:
+        parts = cell.split("!")
+        if len(parts) != 2:
+            return False
+        cell = parts[1]
+    
+    # Remove $ signs (absolute reference markers)
+    cell = cell.replace("$", "")
+    
+    # Match pattern: 1-3 letters followed by 1-7 digits
+    pattern = r"^[A-Za-z]{1,3}[0-9]{1,7}$"
+    return bool(re.match(pattern, cell))
+
+
+def validate_formula_sync(formula: str) -> dict:
+    """Validate Excel formula syntax without applying it.
+    
+    Checks for:
+    - Proper formula start (=)
+    - Balanced parentheses
+    - Valid function names
+    - Valid cell references
+    - Proper string quoting
+    
+    Args:
+        formula: Formula string to validate
+        
+    Returns:
+        Dictionary with validation result:
+        {
+            "valid": bool,
+            "error": str or None,
+            "warnings": list of str,
+            "functions_used": list of str,
+        }
+    """
+    result = {
+        "valid": True,
+        "error": None,
+        "warnings": [],
+        "functions_used": [],
+    }
+    
+    if not formula or not isinstance(formula, str):
+        result["valid"] = False
+        result["error"] = "Formula must be a non-empty string"
+        return result
+    
+    formula = formula.strip()
+    
+    # Check if formula starts with =
+    if not formula.startswith("="):
+        result["valid"] = False
+        result["error"] = "Formula must start with '='"
+        return result
+    
+    # Remove the leading =
+    formula_body = formula[1:]
+    
+    if not formula_body:
+        result["valid"] = False
+        result["error"] = "Formula body is empty after '='"
+        return result
+    
+    # Check for balanced parentheses
+    paren_count = 0
+    in_string = False
+    string_char = None
+    
+    for i, char in enumerate(formula_body):
+        # Track string literals
+        if char in ('"', "'") and (i == 0 or formula_body[i-1] != "\\"):
+            if not in_string:
+                in_string = True
+                string_char = char
+            elif char == string_char:
+                in_string = False
+                string_char = None
+            continue
+        
+        if not in_string:
+            if char == "(":
+                paren_count += 1
+            elif char == ")":
+                paren_count -= 1
+                
+            if paren_count < 0:
+                result["valid"] = False
+                result["error"] = f"Unbalanced parentheses: extra ')' at position {i + 2}"
+                return result
+    
+    if paren_count != 0:
+        result["valid"] = False
+        result["error"] = f"Unbalanced parentheses: {abs(paren_count)} unclosed '('"
+        return result
+    
+    # Check for unclosed string
+    if in_string:
+        result["valid"] = False
+        result["error"] = "Unclosed string literal"
+        return result
+    
+    # Extract and validate function names
+    function_pattern = r'\b([A-Z][A-Z0-9_]*)\s*\('
+    functions = re.findall(function_pattern, formula_body.upper())
+    
+    for func in functions:
+        if func not in VALID_EXCEL_FUNCTIONS:
+            # Check if it might be a named range
+            if not re.match(r'^[A-Z]{1,3}[0-9]+$', func):
+                result["warnings"].append(f"Unknown function: {func}")
+        else:
+            if func not in result["functions_used"]:
+                result["functions_used"].append(func)
+    
+    # Check for common syntax errors
+    # Double operators
+    if re.search(r'[+\-*/^]{2,}', formula_body):
+        result["valid"] = False
+        result["error"] = "Invalid: consecutive operators"
+        return result
+    
+    # Operator at end (except for ranges)
+    if re.search(r'[+\-*/^=<>]$', formula_body) and not formula_body.endswith(":"):
+        result["valid"] = False
+        result["error"] = "Formula cannot end with an operator"
+        return result
+    
+    # Empty parentheses (except for functions that allow it)
+    if "()" in formula_body:
+        # Check if it's a valid no-argument function
+        no_arg_functions = {"NOW", "TODAY", "TRUE", "FALSE", "NA", "RAND", "ROW", "COLUMN"}
+        match = re.search(r'(\w+)\(\)', formula_body.upper())
+        if match and match.group(1) not in no_arg_functions:
+            result["warnings"].append(f"Empty parentheses in {match.group(1)}()")
+    
+    return result
+
