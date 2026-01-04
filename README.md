@@ -1135,8 +1135,8 @@ MIT License - See LICENSE file for details
 
 For issues, questions, or contributions:
 
-- **GitHub Issues**: [Create an issue](https://github.com/yourusername/ExceLLM/issues)
-- **Documentation**: [Read the docs](https://github.com/yourusername/ExceLLM/blob/main/README.md)
+- **GitHub Issues**: [Create an issue](https://github.com/mroshdy91/Excellm/issues)
+- **Documentation**: [Read the docs](https://github.com/mroshdy91/Excellm/blob/main/README.md)
 
 ## Acknowledgments
 
