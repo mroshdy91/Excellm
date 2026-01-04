@@ -1,0 +1,13 @@
+# Excel Live MCP Server - Dependencies
+
+# Core MCP framework
+mcp[cli]>=1.2.0
+
+# Windows COM automation for Excel
+pywin32>=306
+
+# Cross-platform file-based Excel operations
+openpyxl>=3.1.0
+
+# Type hints and validation
+pydantic>=2.0.0

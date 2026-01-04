@@ -1,0 +1,23 @@
+# Example MCP Server Configuration for Cursor AI Editor
+#
+# This is an example configuration file for Cursor AI Editor.
+# Add this to your Cursor settings under the MCP section.
+#
+# Steps:
+# 1. Open Cursor
+# 2. Go to Settings → MCP
+# 3. Click "Add new global MCP server"
+# 4. Use the configuration below
+
+{
+  "mcpServers": {
+    "excel-live-injector": {
+      "command": "python",
+      "args": [
+        "-m",
+        "excellm"
+      ],
+      "description": "Real-time Excel automation for open files using Windows COM"
+    }
+  }
+}

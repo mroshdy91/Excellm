@@ -1,0 +1,30 @@
+# Example MCP Server Configuration for Claude Desktop (macOS)
+#
+# This is an example configuration file for Claude Desktop on macOS.
+# Copy this content to: ~/Library/Application Support/Claude/claude_desktop_config.json
+#
+# Steps:
+# 1. Open Terminal
+# 2. Run: open ~/Library/Application\ Support/Claude/
+# 3. Create or edit: claude_desktop_config.json
+# 4. Paste this configuration
+# 5. Save the file
+# 6. Press Cmd+Q to fully quit Claude Desktop
+# 7. Restart Claude Desktop
+
+{
+  "mcpServers": {
+    "excel-live-injector": {
+      "command": "python3",
+      "args": [
+        "-m",
+        "excellm"
+      ],
+      "description": "Real-time Excel automation for open files using Windows COM",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "LOG_LEVEL": "INFO"
+      }
+    }
+  }
+}
