@@ -6,9 +6,12 @@ Contains all tool implementations organized by functionality.
 from .readers import (
     read_cell_sync,
     read_range_sync,
+    batch_read_sync,
     get_unique_values_sync,
     get_current_selection_sync,
 )
+
+
 from .writers import (
     write_cell_sync,
     write_range_sync,
@@ -72,6 +75,7 @@ __all__ = [
     # Readers
     "read_cell_sync",
     "read_range_sync",
+    "batch_read_sync",
     "get_unique_values_sync",
     "get_current_selection_sync",
     # Writers

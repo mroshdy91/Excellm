@@ -145,9 +145,10 @@ Sheet-level analysis. Detects used range, labeled regions, and layout.
 List all open workbooks and their sheets.
 **Usage:** `await list_open_workbooks()`
 
-#### 4. `read(workbook_name, sheet_name, reference)`
-Read cells or ranges. Smartly handles single cells vs 2D ranges.
+#### 4. `read(workbook_name, sheet_name, reference, batch)`
+Read cells or ranges. Supports single range OR efficient batch reading.
 **Usage:** `await read("data.xlsx", "Sheet1", "A1:D10")`
+**Batch:** `await read("data.xlsx", batch=[{"sheet": "S1", "range": "A1"}, {"range": "B2"}])`
 
 #### 5. `search(workbook_name, filters, ...)`
 Filter data server-side before returning to LLM.
@@ -280,7 +281,7 @@ Utility to check if a reference string is valid.
 **Usage:** `await validate_cell_reference("A1")`
 
 #### 29. `validate_formula(formula)`
-Validate Excel formula syntax without applying it.
+Validate Excel formula syntax, check for errors, and get correction suggestions.
 **Usage:** `await validate_formula("=SUM(A1:A10)")`
 
 ---

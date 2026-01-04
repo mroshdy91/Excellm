@@ -18,6 +18,7 @@ from .tools import (
     # Readers
     read_cell_sync,
     read_range_sync,
+    batch_read_sync,
     get_unique_values_sync,
     get_current_selection_sync,
     # Writers
@@ -109,7 +110,7 @@ mcp = FastMCP(
 
     Key Tools:
     - list_open_workbooks(): List all open workbooks
-    - read(): Read cells/ranges
+    - read(): Read cells/ranges (supports batch=[...] for multi-read)
     - write(): Write to cells/ranges
     - search(): Filter data by conditions
     - format(): Apply formatting
@@ -208,21 +209,30 @@ async def select_range(
 @mcp.tool()
 async def read(
     workbook_name: str,
-    sheet_name: str,
+    sheet_name: str = None,
     reference: str = None,
+    batch: List[dict] = None,
 ) -> dict:
-    """Read from a cell or range in Excel.
+    """Read from a cell, range, or multiple ranges in Excel.
 
     Args:
         workbook_name: Name of open workbook
-        sheet_name: Name of worksheet
-        reference: Cell (A1), range (A1:C5), or comma-separated. Defaults to UsedRange.
+        sheet_name: Name of worksheet (required if batch is None)
+        reference: Cell (A1), range (A1:C5). Defaults to UsedRange.
+        batch: Optional list of read requests: [{"sheet": "S1", "range": "A1"}, ...]
+               If provided, sheet_name and reference are ignored.
 
     Returns:
         Dictionary with cell/range data and metadata
     """
     try:
-        # Use the session manager for complex reads (handles scattered references)
+        if batch:
+            return await asyncio.to_thread(batch_read_sync, workbook_name, batch)
+        
+        if not sheet_name:
+            raise ToolError("sheet_name is required when batch is not used")
+
+        # Use the session manager for standard reads
         session = get_session_manager()
         result = await session.read(workbook_name, sheet_name, reference)
         return result
@@ -230,6 +240,7 @@ async def read(
         if isinstance(e, ToolError):
             raise
         raise ToolError(f"Failed to read: {str(e)}") from e
+
 
 
 @mcp.tool()

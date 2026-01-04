@@ -388,9 +388,108 @@ def get_current_selection_sync() -> Dict[str, Any]:
         
         return result
         
+
     except Exception as e:
         return {
             "success": True,
             "has_selection": False,
             "message": f"Could not get selection: {str(e)}"
         }
+
+
+def batch_read_sync(
+    workbook_name: str,
+    batch: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Execute multiple read requests reusing the COM connection.
+    
+    Args:
+        workbook_name: Default workbook name (can be overridden in batch items)
+        batch: List of read requests, e.g.:
+               [{"sheet": "Sheet1", "range": "A1"}, {"range": "B2"}]
+               
+    Returns:
+        Dictionary with results list and success status
+    """
+    _init_com()
+    app = get_excel_app()
+    
+    # Cache workbook reference to avoid repeated lookups
+    cached_wb_name = None
+    cached_wb = None
+    
+    results = []
+    
+    for i, req in enumerate(batch):
+        try:
+            # Determine target workbook
+            wb_name = req.get("workbook", workbook_name)
+            
+            # Get workbook object (reuse if same)
+            if wb_name != cached_wb_name:
+                cached_wb = get_workbook(app, wb_name)
+                cached_wb_name = wb_name
+                
+            # Determine sheet
+            sheet_name = req.get("sheet")
+            if not sheet_name:
+                # Use active sheet if not specified
+                sheet = cached_wb.ActiveSheet
+                sheet_name = sheet.Name
+            else:
+                sheet = get_worksheet(cached_wb, sheet_name)
+                
+            # Determine range
+            range_str = req.get("range") # None = UsedRange
+            
+            # Perform read
+            # reuse logic from read_range_sync but we have objects already
+            if range_str:
+                rng = sheet.Range(range_str)
+            else:
+                rng = sheet.UsedRange
+                range_str = rng.Address.replace("$", "")
+                
+            # Read value (fastest method)
+            val = rng.Value
+            
+            # Process value similar to read_range_sync
+            data = []
+            if val is not None:
+                if isinstance(val, (list, tuple)):
+                    # 2D or 1D tuple
+                     if len(val) > 0 and isinstance(val[0], (list, tuple)):
+                         data = [[str(c) if c is not None else "" for c in r] for r in val]
+                     else:
+                         data = [[str(c) if c is not None else "" for c in val]]
+                else:
+                    # Scalar
+                    data = [[str(val)]]
+                    
+            rows = len(data)
+            cols = len(data[0]) if data else 0
+            
+            results.append({
+                "request_index": i,
+                "success": True,
+                "workbook": wb_name,
+                "sheet": sheet_name,
+                "range": range_str,
+                "data": data,
+                "rows": rows,
+                "cols": cols
+            })
+            
+        except Exception as e:
+            results.append({
+                "request_index": i,
+                "success": False,
+                "error": str(e)
+            })
+            
+    return {
+        "success": True,
+        "results": results,
+        "count": len(results)
+    }
+

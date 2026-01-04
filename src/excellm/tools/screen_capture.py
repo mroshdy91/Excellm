@@ -83,8 +83,11 @@ def capture_sheet_sync(
             # This is more reliable across Excel versions
             
             # Copy range as picture
-            # xlScreen = 1, xlBitmap = 2, xlPicture = -4147
-            capture_range.CopyPicture(Appearance=1, Format=2)  # xlScreen, xlBitmap
+            # xlScreen = 1, xlBitmap = 2
+            capture_range.CopyPicture(Appearance=1, Format=2)
+            
+            # Brief pause to allow clipboard to populate
+            time.sleep(0.2)
             
             # Create a temporary chart to paste and export
             chart_obj = worksheet.ChartObjects().Add(
@@ -94,6 +97,8 @@ def capture_sheet_sync(
                 Height=capture_range.Height
             )
             
+            # Activate chart object to ensure Paste targets it
+            chart_obj.Activate()
             chart = chart_obj.Chart
             
             # Paste the picture and export

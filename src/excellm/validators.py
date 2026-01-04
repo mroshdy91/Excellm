@@ -601,28 +601,32 @@ def validate_filter_structure(filter_dict: Any) -> Tuple[bool, str]:
 # Formula Validation Functions
 # ============================================================================
 
+
 VALID_EXCEL_FUNCTIONS = {
     # Math functions
     "SUM", "AVERAGE", "COUNT", "COUNTA", "COUNTBLANK", "MAX", "MIN",
     "SUMIF", "SUMIFS", "COUNTIF", "COUNTIFS", "AVERAGEIF", "AVERAGEIFS",
+    "SUMPRODUCT",
     "ROUND", "ROUNDUP", "ROUNDDOWN", "ABS", "SQRT", "POWER", "MOD",
-    "INT", "CEILING", "FLOOR", "RAND", "RANDBETWEEN",
+    "INT", "CEILING", "FLOOR", "RAND", "RANDBETWEEN", "SEQUENCE", "RANDARRAY",
     # Text functions
     "LEFT", "RIGHT", "MID", "LEN", "TRIM", "UPPER", "LOWER", "PROPER",
     "CONCATENATE", "CONCAT", "TEXTJOIN", "TEXT", "VALUE", "FIND", "SEARCH",
-    "SUBSTITUTE", "REPLACE", "REPT", "CHAR", "CODE",
+    "SUBSTITUTE", "REPLACE", "REPT", "CHAR", "CODE", "TEXTSPLIT", "TEXTBEFORE", "TEXTAFTER",
     # Lookup functions
-    "VLOOKUP", "HLOOKUP", "INDEX", "MATCH", "XLOOKUP", "LOOKUP",
-    "OFFSET", "INDIRECT", "ROW", "COLUMN", "ROWS", "COLUMNS",
+    "VLOOKUP", "HLOOKUP", "INDEX", "MATCH", "XLOOKUP", "LOOKUP", "XMATCH",
+    "OFFSET", "INDIRECT", "ROW", "COLUMN", "ROWS", "COLUMNS", "CHOOSECOLS", "CHOOSEROWS",
+    "FILTER", "SORT", "SORTBY", "UNIQUE", "TRANSPOSE",
     # Logical functions
     "IF", "IFS", "AND", "OR", "NOT", "XOR", "TRUE", "FALSE",
-    "IFERROR", "IFNA", "SWITCH", "CHOOSE",
+    "IFERROR", "IFNA", "SWITCH", "CHOOSE", "LET", "LAMBDA",
+    "MAP", "REDUCE", "SCAN", "MAKEARRAY", "BYROW", "BYCOL", "ISOMITTED",
     # Date functions
     "DATE", "TODAY", "NOW", "YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND",
     "WEEKDAY", "WEEKNUM", "DATEVALUE", "TIMEVALUE", "EDATE", "EOMONTH",
     "NETWORKDAYS", "WORKDAY", "DATEDIF",
     # Info functions
-    "ISBLANK", "ISERROR", "ISNA", "ISNUMBER", "ISTEXT", "ISLOGICAL",
+    "ISBLANK", "ISERROR", "ISNA", "ISNUMBER", "ISTEXT", "ISLOGICAL", "ISFORMULA",
     "TYPE", "N", "NA", "INFO", "CELL",
     # Financial functions
     "PMT", "PV", "FV", "RATE", "NPER", "NPV", "IRR",
@@ -665,9 +669,10 @@ def validate_formula_sync(formula: str) -> dict:
     Checks for:
     - Proper formula start (=)
     - Balanced parentheses
-    - Valid function names
+    - Valid function names (including modern 365 functions)
     - Valid cell references
     - Proper string quoting
+    - Ambiguous ranges
     
     Args:
         formula: Formula string to validate
@@ -677,13 +682,22 @@ def validate_formula_sync(formula: str) -> dict:
         {
             "valid": bool,
             "error": str or None,
-            "warnings": list of str,
+            "suggestion": str or None,
+            "warnings": [
+                {
+                    "type": str,      # invalid_function, suspicious_range, syntax, logic
+                    "severity": str,  # low, medium, high
+                    "message": str,
+                    "location": str or None
+                }
+            ],
             "functions_used": list of str,
         }
     """
     result = {
         "valid": True,
         "error": None,
+        "suggestion": None,
         "warnings": [],
         "functions_used": [],
     }
@@ -697,8 +711,10 @@ def validate_formula_sync(formula: str) -> dict:
     
     # Check if formula starts with =
     if not formula.startswith("="):
+        # Suggest correction
         result["valid"] = False
         result["error"] = "Formula must start with '='"
+        result["suggestion"] = f"Did you mean: ={formula}?"
         return result
     
     # Remove the leading =
@@ -753,13 +769,49 @@ def validate_formula_sync(formula: str) -> dict:
     
     for func in functions:
         if func not in VALID_EXCEL_FUNCTIONS:
-            # Check if it might be a named range
-            if not re.match(r'^[A-Z]{1,3}[0-9]+$', func):
-                result["warnings"].append(f"Unknown function: {func}")
+            # Check if it might be a named range or just unknown
+            # Named ranges usually don't have '(' immediately after, but in some contexts they might
+            # Simple heuristic: if it looks like a function call but isn't known
+            
+            # Check against range pattern (A1, AA123) to avoid false positives for multiplication e.g. AB(
+            is_range_like = re.match(r'^[A-Z]{1,3}[0-9]+$', func)
+            
+            if not is_range_like:
+                result["warnings"].append({
+                    "type": "unknown_function",
+                    "severity": "medium",
+                    "message": f"Unknown function '{func}'. Use generic functions or check for typos.",
+                    "function": func
+                })
         else:
             if func not in result["functions_used"]:
                 result["functions_used"].append(func)
     
+    # Range Validation (Advanced)
+    # Check for whole column references in potential array contexts
+    # Pattern: A:A or A:C
+    whole_col_pattern = r'\b[A-Za-z]{1,3}:[A-Za-z]{1,3}\b'
+    whole_cols = re.findall(whole_col_pattern, formula_body)
+    
+    # Functions that are dangerous with whole columns (slow calculation)
+    dangerous_funcs_with_whole_cols = {"SUMPRODUCT", "FILTER", "SORT", "UNIQUE"}
+    used_dangerous_func = any(f in result["functions_used"] for f in dangerous_funcs_with_whole_cols)
+    
+    if whole_cols and used_dangerous_func:
+        result["warnings"].append({
+            "type": "performance_risk",
+            "severity": "medium",
+            "message": f"Performance risk: Using whole column references ({whole_cols[0]}) with array functions references >1M rows.",
+        })
+    elif whole_cols:
+        # Just a low severity warning for general awareness
+         result["warnings"].append({
+            "type": "range_suspicious",
+            "severity": "low",
+            "message": f"Note: Whole column reference {whole_cols[0]} used. Ensure this is intentional.",
+        })
+        
+        
     # Check for common syntax errors
     # Double operators
     if re.search(r'[+\-*/^]{2,}', formula_body):
@@ -773,13 +825,18 @@ def validate_formula_sync(formula: str) -> dict:
         result["error"] = "Formula cannot end with an operator"
         return result
     
-    # Empty parentheses (except for functions that allow it)
+    # Empty parentheses
     if "()" in formula_body:
         # Check if it's a valid no-argument function
         no_arg_functions = {"NOW", "TODAY", "TRUE", "FALSE", "NA", "RAND", "ROW", "COLUMN"}
         match = re.search(r'(\w+)\(\)', formula_body.upper())
         if match and match.group(1) not in no_arg_functions:
-            result["warnings"].append(f"Empty parentheses in {match.group(1)}()")
+             result["warnings"].append({
+                "type": "syntax",
+                "severity": "low",
+                "message": f"Empty parentheses in {match.group(1)}(). Verify if arguments are required.",
+            })
     
     return result
+
 
