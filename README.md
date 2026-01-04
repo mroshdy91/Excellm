@@ -124,481 +124,145 @@ Configure in ChatGPT's MCP settings similarly to above.
 
 ## Available Tools
 
-### 1. `list_open_workbooks()`
+### 🔍 Inspection (Start Here)
 
-List all currently open Excel workbooks with their sheet names.
+#### 1. `inspect_workbook()`
+Fast workbook-level radar. Returns sheet names, visibility, and "scent" of data without reading cells.
+**Usage:** `await inspect_workbook()`
 
-**Returns:**
-```json
-{
-  "success": true,
-  "workbooks": [
-    {
-      "name": "data.xlsx",
-      "sheets": ["Sheet1", "Sheet2", "Summary"]
-    },
-    {
-      "name": "report.xlsx",
-      "sheets": ["Dashboard"]
-    }
-  ],
-  "count": 2
-}
-```
-
-**Example Usage:**
-```
-User: List all open Excel workbooks
-LLM: [Calls list_open_workbooks()]
-  Found 2 open workbooks:
-  - data.xlsx: Sheet1, Sheet2, Summary
-  - report.xlsx: Dashboard
-```
+#### 2. `explore(scope, mode="quick")`
+Sheet-level analysis. Detects used range, labeled regions, and layout.
+**Usage:** `await explore({"sheet": "Sheet1"}, mode="deep")`
 
 ---
 
-### 2. `read_cell(workbook_name, sheet_name, cell)`
+### 📖 Reading & Navigation
 
-Read a single cell value from an open Excel workbook.
+#### 3. `list_open_workbooks()`
+List all open workbooks and their sheets.
+**Usage:** `await list_open_workbooks()`
 
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `sheet_name` (string, required): Name of worksheet
-- `cell` (string, required): Cell reference (e.g., "A1", "B5", "Z100")
+#### 4. `read(workbook_name, sheet_name, reference)`
+Read cells or ranges. Smartly handles single cells vs 2D ranges.
+**Usage:** `await read("data.xlsx", "Sheet1", "A1:D10")`
 
-**Returns:**
-```json
-{
-  "success": true,
-  "workbook": "data.xlsx",
-  "sheet": "Sheet1",
-  "cell": "A1",
-  "value": "Approved",
-  "type": "string"
-}
-```
+#### 5. `search(workbook_name, filters, ...)`
+Filter data server-side before returning to LLM.
+**Usage:** `await search("data.xlsx", {"Column": "Status", "Value": "Active"})`
 
-**Example Usage:**
-```
-User: What's the value in cell A1 of Sheet1 in data.xlsx?
-LLM: [Calls read_cell("data.xlsx", "Sheet1", "A1")]
-  Cell A1 in data.xlsx!Sheet1 contains: "Approved"
-```
+#### 6. `get_unique_values(workbook_name, sheet_name, range)`
+Get unique values and counts from a column.
+**Usage:** `await get_unique_values("data.xlsx", "Sheet1", "A:A")`
+
+#### 7. `get_current_selection()`
+Get the currently selected cell/range in the active window.
+**Usage:** `await get_current_selection()`
+
+#### 8. `select_range(workbook_name, sheet_name, reference)`
+Visually select a range in the Excel UI.
+**Usage:** `await select_range("data.xlsx", "Sheet1", "A1:B10")`
 
 ---
 
-### 3. `read_range(workbook_name, sheet_name, range_str)`
+### ✍️ Writing & Editing
 
-Read a range of cells from an open Excel workbook.
+#### 9. `write(workbook_name, sheet_name, reference, data, ...)`
+Write values. Supports single cells or 2D arrays. Includes safety checks.
+**Usage:** `await write("data.xlsx", "Sheet1", "A1", "Hello")`
 
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `sheet_name` (string, required): Name of worksheet
-- `range_str` (string, required): Range reference (e.g., "A1:C5", "B2:D10")
+#### 10. `copy_range(source_workbook, source_sheet, source_range, target_sheet, ...)`
+Copy data between locations, preserving formatting.
+**Usage:** `await copy_range("data.xlsx", "Sheet1", "A1:A10", target_sheet="Sheet2")`
 
-**Returns:**
-```json
-{
-  "success": true,
-  "workbook": "data.xlsx",
-  "sheet": "Sheet1",
-  "range": "A1:C3",
-  "data": [
-    ["Name", "Age", "City"],
-    ["Alice", 30, "NYC"],
-    ["Bob", 25, "LA"]
-  ],
-  "rows": 3,
-  "cols": 3
-}
-```
+#### 11. `find_replace(workbook_name, find_value, replace_value, ...)`
+Find and replace text.
+**Usage:** `await find_replace("data.xlsx", "Old", "New")`
 
-**Example Usage:**
-```
-User: Read the first 3 rows from Sheet1 in data.xlsx, columns A to C
-LLM: [Calls read_range("data.xlsx", "Sheet1", "A1:C3")]
-  Here's the data from range A1:C3:
-  Row 1: Name, Age, City
-  Row 2: Alice, 30, NYC
-  Row 3: Bob, 25, LA
-```
+#### 12. `sort_range(workbook_name, sheet_name, range, sort_by)`
+Sort data by multiple columns.
+**Usage:** `await sort_range("data.xlsx", "Sheet1", "A1:D50", [{"column": "A", "order": "asc"}])`
 
 ---
 
-### 4. `write_cell(workbook_name, sheet_name, cell, value, auto_save)`
+### 🎨 Formatting
 
-Write a value to a cell in an open Excel workbook.
+#### 13. `format(workbook_name, sheet_name, reference, style, format)`
+Apply styles (color, bold, number format) to ranges.
+**Usage:** `await format("data.xlsx", "Sheet1", "A1", style="header")`
 
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `sheet_name` (string, required): Name of worksheet
-- `cell` (string, required): Cell reference (e.g., "A1", "B5")
-- `value` (string, required): Value to write
-- `auto_save` (boolean, optional): Auto-save workbook after writing (default: True)
-
-**Returns:**
-```json
-{
-  "success": true,
-  "workbook": "data.xlsx",
-  "sheet": "Sheet1",
-  "cell": "A1",
-  "value": "Approved",
-  "saved": true
-}
-```
-
-**Example Usage:**
-```
-User: Write "Approved" to cell A1 in Sheet1 of data.xlsx
-LLM: [Calls write_cell("data.xlsx", "Sheet1", "A1", "Approved")]
-  ✓ Successfully wrote "Approved" to data.xlsx!Sheet1!A1
-  Workbook saved automatically.
-```
+#### 14. `get_format(workbook_name, sheet_name, reference)`
+Read formatting properties of a range.
+**Usage:** `await get_format("data.xlsx", "Sheet1", "A1")`
 
 ---
 
-### 5. `write_range(workbook_name, sheet_name, range_str, data, auto_save)`
+### 📋 Sheet & Structure Management
 
-Write a 2D array of values to a range in Excel.
+#### 15. `manage_sheet(workbook_name, action, sheet_name, ...)`
+Add, rename, delete, hide, copy, or move worksheets.
+**Usage:** `await manage_sheet("data.xlsx", action="add", sheet_name="NewSheet")`
 
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `sheet_name` (string, required): Name of worksheet
-- `range_str` (string, required): Range reference (e.g., "A1:C5")
-- `data` (array, required): 2D array of values (list of lists)
-- `auto_save` (boolean, optional): Auto-save after writing (default: True)
+#### 16. `insert(workbook_name, sheet_name, insert_type, position, count)`
+Insert rows or columns.
+**Usage:** `await insert("data.xlsx", "Sheet1", "row", "5", count=2)`
 
-**Returns:**
-```json
-{
-  "success": true,
-  "workbook": "data.xlsx",
-  "sheet": "Sheet1",
-  "range": "A1:C2",
-  "cells_written": 4,
-  "saved": true
-}
-```
-
-**Example Usage:**
-```
-User: Update the data in data.xlsx Sheet1 range A1:C2 with new values
-LLM: [Calls write_range with data]
-  ✓ Successfully wrote 4 cells to data.xlsx!Sheet1!A1:C2
-  Workbook saved automatically.
-```
+#### 17. `delete(workbook_name, sheet_name, delete_type, position, count)`
+Delete rows or columns.
+**Usage:** `await delete("data.xlsx", "Sheet1", "column", "C")`
 
 ---
 
-### 6. `save_workbook(workbook_name, save_as)`
+### 📊 Excel Tables
 
-Save an open Excel workbook.
+#### 18. `create_table(workbook_name, sheet_name, range_ref, table_name)`
+Convert a range into an official Excel Table (ListObject).
+**Usage:** `await create_table("data.xlsx", "Sheet1", "A1:D10", "SalesTable")`
 
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `save_as` (string, optional): New filepath to save as (optional)
+#### 19. `list_tables(workbook_name)`
+List all tables in the workbook.
+**Usage:** `await list_tables("data.xlsx")`
 
-**Returns:**
-```json
-{
-  "success": true,
-  "workbook": "data.xlsx",
-  "saved_as": "C:\\Users\\User\\Documents\\data.xlsx",
-  "message": "Workbook saved successfully"
-}
-```
-
-**Example Usage:**
-```
-User: Save the data.xlsx workbook
-LLM: [Calls save_workbook("data.xlsx")]
-  ✓ Workbook "data.xlsx" saved successfully
-```
+#### 20. `delete_table(workbook_name, sheet_name, table_name, keep_data)`
+Remove table structure, optionally keeping data.
+**Usage:** `await delete_table("data.xlsx", "Sheet1", "SalesTable")`
 
 ---
 
-### 7. `validate_cell_reference(cell)`
+### ⚙️ Advanced Features
 
-Validate an Excel cell reference format.
+#### 21. `execute_vba(workbook_name, vba_code)`
+Run custom VBA macros (Windows only).
+**Usage:** `await execute_vba("data.xlsx", "Range('A1').Value = 'VBA'")`
 
-**Parameters:**
-- `cell` (string, required): Cell reference to validate
+#### 22. `capture_sheet(workbook_name, sheet_name, range_ref)`
+Take a screenshot of a range (Windows only).
+**Usage:** `await capture_sheet("data.xlsx", "Sheet1", "A1:H10")`
 
-**Returns:**
-```json
-{
-  "valid": true,
-  "cell": "A1",
-  "message": "Valid cell reference"
-}
-```
-
-**Example Usage:**
-```
-User: Is "A1" a valid cell reference?
-LLM: [Calls validate_cell_reference("A1")]
-  ✓ Yes, "A1" is a valid cell reference
-```
+#### 23. `validate_cell_reference(cell)`
+Utility to check if a reference string is valid.
+**Usage:** `await validate_cell_reference("A1")`
 
 ---
 
+### 🚀 Big Data Sessions (Stateful)
 
----
+For handling large datasets (>50 rows) safely.
 
-### 8. `inspect_workbook()`
+#### 24. `create_transform_session(...)`
+Start a session to process data in chunks.
+**Usage:** `await create_transform_session("data.xlsx", "Sheet1", "A", "B")`
 
+#### 25. `process_chunk(session_id, data)`
+Submit processed data for the current chunk.
+**Usage:** `await process_chunk("session_123", [[1, 2], [3, 4]])`
 
-Fast workbook-level radar across ALL sheets without reading cell values. Provides enough information to select which sheet to explore deeply.
+#### 26. `get_session_status(session_id)`
+Check progress of a session.
+**Usage:** `await get_session_status("session_123")`
 
-**Returns:**
-```json
-{
-  "meta": {
-    "tool": "inspect_workbook",
-    "version": "v1",
-    "timestamp": "2026-01-03T05:37:52.613384+00:00",
-    "durationMs": 1399
-  },
-  "workbook": {
-    "name": "data.xlsx",
-    "path": "C:\\Users\\User\\Documents",
-    "readOnly": false,
-    "protected": false
-  },
-  "activeSheet": "Sheet1",
-  "sheetsIndex": [
-    {
-      "name": "Sheet1",
-      "state": "visible",
-      "protected": false,
-      "usedRangeReported": "A1:M31",
-      "dataCellCount": 271,
-      "layoutFlags": {
-        "hasTableObjects": true,
-        "hasAutoFilter": false,
-        "hasFreezePanes": true,
-        "commentsCount": 0,
-        "formulasCount": 54
-      },
-      "flags": ["HAS_TABLE_OBJECTS", "HAS_FREEZE_PANES", "HAS_FORMULAS"],
-      "score": { "priority": 0.9, "density": 0.672 }
-    }
-  ],
-  "recommendations": {
-    "primaryCandidateSheets": ["Sheet1", "Summary"],
-    "avoidSheets": [],
-    "nextExploreSheet": "Sheet1"
-  }
-}
-```
-
-**Flags Detected:**
-- `EMPTY_OR_NEAR_EMPTY`, `USED_RANGE_INFLATED`, `EXTREME_USED_RANGE`
-- `LIKELY_FORMAT_ONLY`, `HIDDEN_SHEET`
-- `HAS_TABLE_OBJECTS`, `HAS_FILTER`, `HAS_FREEZE_PANES`
-- `MERGED_CELLS_PRESENT`, `HAS_COMMENTS_NOTES`, `HAS_FORMULAS`
-
-**Example Usage:**
-```
-User: Scan the workbook and tell me which sheet to explore
-LLM: [Calls inspect_workbook()]
-  Scanned 5 sheets:
-  - "PO Reconciliation" (priority 0.9): 271 data cells, has tables, formulas
-  - "Summary" (priority 0.85): 39 cells
-  Recommended: Start with "PO Reconciliation"
-```
-
----
-
-### 9. `explore(scope, mode)`
-
-Sheet radar that mimics human first glance: structure/layout without reading full data.
-
-**Parameters:**
-- `scope` (object, required): Target sheet - `{"sheet": "ACTIVE"}` or `{"sheet": "SheetName"}`
-- `mode` (string, optional): `"quick"` (default) or `"deep"`
-
-**Quick Mode:** Fast sampling-based analysis (~300 cell probes max)
-**Deep Mode:** Thorough analysis with region detection and accurate bounds
-
-**Returns:**
-```json
-{
-  "meta": {
-    "tool": "explore",
-    "version": "v1",
-    "durationMs": 505,
-    "sheet": "Sheet1",
-    "mode": "quick"
-  },
-  "dataFootprint": {
-    "usedRangeReported": "A1:M31",
-    "realDataBounds": "A2:I29",
-    "dataCellCount": 271,
-    "nonEmptyRows": 28,
-    "nonEmptyCols": 9
-  },
-  "regions": [
-    {
-      "id": "R1",
-      "range": "A2:I29",
-      "density": 0.82,
-      "headerCandidateRows": [2]
-    }
-  ],
-  "outliers": [
-    {
-      "id": "O1",
-      "range": "A30:M31",
-      "distanceFromPrimary": { "rows": 1, "cols": 0 }
-    }
-  ],
-  "layout": {
-    "tables": { "count": 1, "names": ["Table1"] },
-    "freezePanesAt": "A5",
-    "autoFilter": false
-  },
-  "flags": ["OUTLIER_DATA_PRESENT", "HAS_TABLE_OBJECTS", "HAS_FORMULAS"],
-  "readHints": {
-    "primaryRegionId": "R1",
-    "suggestedHeaderScan": "A2:I26",
-    "suggestedBodyRead": "A3:I29",
-    "suggestedOutlierScans": ["A30:M31"]
-  },
-  "recommendations": {
-    "shouldRunDeep": true,
-    "reasons": [{"flag": "OUTLIER_DATA_PRESENT", "severity": "medium"}],
-    "nextActions": [{"tool": "explore", "scope": {"sheet": "Sheet1"}, "mode": "deep"}]
-  }
-}
-```
-
-**Example Usage:**
-```
-User: Explore the active sheet and find its structure
-LLM: [Calls explore({"sheet": "ACTIVE"}, mode="quick")]
-  Sheet "PO Reconciliation":
-  - Primary region: A2:I29 (28 rows, 9 cols, 82% density)
-  - Outlier detected at A30:M31 (possibly summary/notes)
-  - Has table "Table1", freeze panes at A5
-  Recommendation: Run deep mode for better region analysis
-```
-
----
-
-### 10. `delete(workbook_name, sheet_name, delete_type, position, count)`
-
-Delete rows or columns at a specific position.
-
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `sheet_name` (string, required): Name of worksheet
-- `delete_type` (string, required): `"row"` or `"column"`
-- `position` (string, required): Row number (e.g., "5", "5:10") or column (e.g., "C", "C:E")
-- `count` (integer, optional): Number to delete (default: 1, ignored if range specified)
-
-**Returns:**
-```json
-{
-  "success": true,
-  "action": "rows_deleted",
-  "count": 3,
-  "at": "5",
-  "message": "Deleted 3 row(s) at row 5"
-}
-```
-
-**Example Usage:**
-```
-User: Delete rows 10-15 in Sheet1
-LLM: [Calls delete("data.xlsx", "Sheet1", "row", "10:15")]
-  ✓ Deleted 6 rows at row 10
-```
-
----
-
-### 11. `copy_range(source_workbook, source_sheet, source_range, ...)`
-
-Copy data between ranges, sheets, or workbooks.
-
-**Parameters:**
-- `source_workbook` (string, required): Name of source workbook
-- `source_sheet` (string, required): Name of source worksheet
-- `source_range` (string, required): Range to copy (e.g., "A1:D10")
-- `target_workbook` (string, optional): Target workbook (defaults to source)
-- `target_sheet` (string, optional): Target worksheet (defaults to source)
-- `target_cell` (string, optional): Top-left cell of destination (default: "A1")
-- `include_formatting` (bool, optional): Copy formatting (default: true)
-
-**Returns:**
-```json
-{
-  "success": true,
-  "cells_copied": 40,
-  "source": {"workbook": "data.xlsx", "sheet": "Sheet1", "range": "A1:D10"},
-  "target": {"workbook": "data.xlsx", "sheet": "Sheet2", "range": "E1:H10"}
-}
-```
-
-**Example Usage:**
-```
-User: Copy A1:D10 from Sheet1 to Sheet2 starting at E1
-LLM: [Calls copy_range("data.xlsx", "Sheet1", "A1:D10", target_sheet="Sheet2", target_cell="E1")]
-  ✓ Copied 40 cells from Sheet1!A1:D10 to Sheet2!E1:H10
-```
-
----
-
-### 12. `sort_range(workbook_name, sheet_name, range, sort_by, has_header)`
-
-Sort data in a range by one or more columns.
-
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `sheet_name` (string, required): Name of worksheet
-- `range` (string, required): Range to sort (e.g., "A1:D100")
-- `sort_by` (array, required): List of sort specs: `[{"column": "B", "order": "asc"}, ...]`
-- `has_header` (bool, optional): First row is header (default: true)
-
-**Returns:**
-```json
-{
-  "success": true,
-  "range": "A1:D100",
-  "rows_sorted": 99,
-  "sort_by": [{"column": "B", "order": "asc"}]
-}
-```
-
-**Example Usage:**
-```
-User: Sort the data by column B ascending, then column C descending
-LLM: [Calls sort_range("data.xlsx", "Sheet1", "A1:D100", 
-       [{"column": "B", "order": "asc"}, {"column": "C", "order": "desc"}])]
-  ✓ Sorted 99 rows by 2 columns
-```
-
----
-
-### 13. `find_replace(workbook_name, find_value, replace_value, ...)`
-
-Find and replace values in a sheet or workbook.
-
-**Parameters:**
-- `workbook_name` (string, required): Name of open workbook
-- `find_value` (string, required): Value to find
-- `replace_value` (string, required): Value to replace with
-- `sheet_name` (string, optional): Target worksheet (None = all sheets)
-- `match_case` (bool, optional): Match case exactly (default: false)
-- `match_entire_cell` (bool, optional): Match entire cell (default: false)
-- `range` (string, optional): Specific range (defaults to UsedRange)
-- `preview_only` (bool, optional): Count matches without replacing (default: false)
-
-**Returns:**
-```json
-{
-  "success": true,
+#### 27. `create_parallel_sessions(...)`
+Split work for parallel sub-agents.
+**Usage:** `await create_parallel_sessions("data.xlsx", "Sheet1", "A", "B")`  "success": true,
   "total_matches": 15,
   "total_replacements": 15,
   "results": [{"sheet": "Sheet1", "matches_found": 15, "replacements_made": 15}]
