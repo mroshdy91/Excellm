@@ -1,6 +1,6 @@
 [project]
 name = "excellm"
-version = "2.0.0"
+version = "1.0.0"
 description = "ExceLLM - MCP server for Excel live automation with LLM safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,10 +38,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/excellm"
-Documentation = "https://github.com/yourusername/excellm/blob/main/README.md"
-Repository = "https://github.com/yourusername/excellm"
-"Bug Tracker" = "https://github.com/yourusername/excellm/issues"
+Homepage = "https://github.com/mroshdy91/Excellm"
+Documentation = "https://github.com/mroshdy91/Excellm/blob/main/README.md"
+Repository = "https://github.com/mroshdy91/Excellm"
+"Bug Tracker" = "https://github.com/mroshdy91/Excellm/issues"
 
 [build-system]
 requires = ["hatchling"]

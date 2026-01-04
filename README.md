@@ -1147,13 +1147,8 @@ For issues, questions, or contributions:
 
 ## Version History
 
-### 2.0.0-alpha (2026-01-04)
-- **Major Update**: Dual-engine architecture (COM + File-based)
-- **25 MCP tools** (up from 20)
-- VBA execution support
-- Screen capture functionality
-- Excel table operations
-- Cross-platform file mode (Mac/Linux)
-- Enhanced session management for large datasets
-- Workflow guidance markers
-- Comprehensive error handling
+### 1.0.0-alpha (2026-01-04)
+- Initial alpha release
+- 25 MCP tools for Excel automation
+- Dual-engine architecture (COM + File-based)
+- Cross-platform support (Windows, Mac, Linux)
