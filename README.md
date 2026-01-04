@@ -668,7 +668,7 @@ ExceLLM/
 ├── src/
 │   └── excellm/
 │       ├── __init__.py           # Package init
-│       ├── server.py              # Main MCP server with 25 tools
+│       ├── server.py              # Main MCP server with 27 tools
 │       ├── excel_session.py       # Excel COM session manager
 │       ├── validators.py          # Input validation utilities
 │       ├── filters.py             # Filter engine for search
@@ -678,8 +678,8 @@ ExceLLM/
 │       │   ├── errors.py         # ToolError, ErrorCodes
 │       │   └── utils.py          # Consolidated utilities
 │       ├── tools/                 # Tool implementations
-│       │   ├── readers.py        # read_cell, read_range
-│       │   ├── writers.py        # write_cell, write_range
+│       │   ├── readers.py        # read
+│       │   ├── writers.py        # write
 │       │   ├── formatters.py     # format, get_format
 │       │   ├── sheet_mgmt.py     # manage_sheet, insert, delete
 │       │   ├── range_ops.py      # copy_range, sort_range, find_replace
@@ -699,7 +699,7 @@ ExceLLM/
 ### Key Components
 
 1. **FastMCP Server** (`server.py`):
-   - Provides 25 MCP tools
+   - Provides 27 MCP tools
    - Handles tool registration and routing
    - Manages server lifecycle
    - Dual-engine architecture support
@@ -813,6 +813,6 @@ For issues, questions, or contributions:
 
 ### 1.0.0-alpha (2026-01-04)
 - Initial alpha release
-- 25 MCP tools for Excel automation
+- 27 MCP tools for Excel automation
 - Dual-engine architecture (COM + File-based)
 - Cross-platform support (Windows, Mac, Linux)
