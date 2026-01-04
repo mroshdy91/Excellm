@@ -21,7 +21,7 @@ class TestValidators:
 
     def test_validate_cell_format_valid(self):
         """Test valid cell reference formats."""
-        from excel_live_mcp.validators import validate_cell_format
+        from excellm.validators import validate_cell_format
 
         # Valid formats
         assert validate_cell_format("A1") is True
@@ -32,7 +32,7 @@ class TestValidators:
 
     def test_validate_cell_format_invalid(self):
         """Test invalid cell reference formats."""
-        from excel_live_mcp.validators import validate_cell_format
+        from excellm.validators import validate_cell_format
 
         # Invalid formats
         assert validate_cell_format("1A") is False
@@ -43,7 +43,7 @@ class TestValidators:
 
     def test_validate_workbook_name(self):
         """Test workbook name validation."""
-        from excel_live_mcp.validators import validate_workbook_name
+        from excellm.validators import validate_workbook_name
 
         # Valid names
         assert validate_workbook_name("data.xlsx") is True
@@ -57,7 +57,7 @@ class TestValidators:
 
     def test_validate_sheet_name(self):
         """Test sheet name validation."""
-        from excel_live_mcp.validators import validate_sheet_name
+        from excellm.validators import validate_sheet_name
 
         # Valid names
         assert validate_sheet_name("Sheet1") is True
@@ -69,7 +69,7 @@ class TestValidators:
 
     def test_validate_range_format(self):
         """Test range format validation."""
-        from excel_live_mcp.validators import validate_range_format
+        from excellm.validators import validate_range_format
 
         # Valid ranges
         assert validate_range_format("A1:C5") is True
@@ -94,7 +94,7 @@ class TestMCPIntegration:
     @pytest.mark.skipif(not _excel_available(), reason="Excel not running")
     async def test_list_workbooks(self):
         """Test listing open workbooks."""
-        from excel_live_mcp.excel_session import ExcelSessionManager
+        from excellm.excel_session import ExcelSessionManager
 
         session = ExcelSessionManager()
         workbooks = await session.list_workbooks()
@@ -109,7 +109,7 @@ class TestMCPIntegration:
     @pytest.mark.skipif(not _excel_available(), reason="Excel not running")
     async def test_read_write_cell(self):
         """Test reading and writing to a cell."""
-        from excel_live_mcp.excel_session import ExcelSessionManager
+        from excellm.excel_session import ExcelSessionManager
 
         session = ExcelSessionManager()
 
