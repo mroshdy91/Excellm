@@ -67,6 +67,7 @@ from .tools import (
     list_pivot_tables_sync,
     delete_pivot_table_sync,
 )
+from .tools.history import get_recent_changes_sync
 from .inspection import inspect_workbook_sync, explore_sync
 
 # For backward compatibility - keep ExcelSessionManager for tools that still need it
@@ -699,6 +700,44 @@ async def find_replace(
         if isinstance(e, ToolError):
             raise
         raise ToolError(f"Failed to find/replace: {str(e)}") from e
+
+
+@mcp.tool()
+async def get_recent_changes(
+    limit: int = 10,
+    history_type: str = "undo",
+) -> dict:
+    """Get the history of recent user actions (Undo/Redo stack).
+    
+    Useful for "check my last changes" or understanding what the user just did.
+    
+    Args:
+        limit: Max number of items to retrieve (default: 10)
+        history_type: "undo" (what user did) or "redo" (what user undid)
+        
+    Returns:
+        List of actions directly from Excel's Undo/Redo stack.
+        Each item has {"description": "...", "probable_address": "..."}
+        
+    Example:
+        >>> get_recent_changes(limit=1)
+        [{"index": 1, "description": "Typing '100' in A1", "probable_address": "A1"}]
+    """
+    if history_type.lower() not in ("undo", "redo"):
+        raise ToolError("history_type must be 'undo' or 'redo'")
+        
+    try:
+        items = await asyncio.to_thread(get_recent_changes_sync, limit, history_type)
+        return {
+            "success": True,
+            "type": history_type,
+            "count": len(items),
+            "history": items
+        }
+    except Exception as e:
+        if isinstance(e, ToolError):
+            raise
+        raise ToolError(f"Failed to get history: {str(e)}") from e
 
 
 # ============================================================================

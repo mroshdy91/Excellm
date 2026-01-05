@@ -5,7 +5,7 @@ A Model Context Protocol (MCP) server for Excel automation with dual-engine supp
 ## Features
 
 - ✅ **Dual-Engine Architecture**: Live Excel (Windows COM) or file-based (cross-platform)
-- ✅ **33 MCP Tools**: Comprehensive Excel automation toolkit
+- ✅ **34 MCP Tools**: Comprehensive Excel automation toolkit
 - ✅ **Real-Time Excel Operations**: Work with files open in Excel (Windows)
 - ✅ **Cross-Platform File Mode**: Work with .xlsx files on Windows, Mac, Linux
 - ✅ **Charts & Pivot Tables**: Native Excel chart and pivot table creation
@@ -168,21 +168,32 @@ Visually select a range in the Excel UI.
 
 ---
 
+### 🕒 History & Changes
+
+#### 9. `get_recent_changes(limit=10, history_type="undo")`
+Get the history of recent user actions from the Undo or Redo stack.
+**Usage:** `await get_recent_changes(limit=5)`
+**Redo:** `await get_recent_changes(limit=5, history_type="redo")`
+
+---
+
 ### ✍️ Writing & Editing
 
-#### 9. `write(workbook_name, sheet_name, reference, data, ...)`
+### ✍️ Writing & Editing
+
+#### 10. `write(workbook_name, sheet_name, reference, data, ...)`
 Write values. Supports single cells or 2D arrays. Includes safety checks.
 **Usage:** `await write("data.xlsx", "Sheet1", "A1", "Hello")`
 
-#### 10. `copy_range(source_workbook, source_sheet, source_range, target_sheet, ...)`
+#### 11. `copy_range(source_workbook, source_sheet, source_range, target_sheet, ...)`
 Copy data between locations, preserving formatting.
 **Usage:** `await copy_range("data.xlsx", "Sheet1", "A1:A10", target_sheet="Sheet2")`
 
-#### 11. `find_replace(workbook_name, find_value, replace_value, ...)`
+#### 12. `find_replace(workbook_name, find_value, replace_value, ...)`
 Find and replace text.
 **Usage:** `await find_replace("data.xlsx", "Old", "New")`
 
-#### 12. `sort_range(workbook_name, sheet_name, range, sort_by)`
+#### 13. `sort_range(workbook_name, sheet_name, range, sort_by)`
 Sort data by multiple columns.
 **Usage:** `await sort_range("data.xlsx", "Sheet1", "A1:D50", [{"column": "A", "order": "asc"}])`
 
@@ -190,23 +201,25 @@ Sort data by multiple columns.
 
 ### 🎨 Formatting
 
-#### 13. `format(workbook_name, sheet_name, reference, style, format)`
+### 🎨 Formatting
+
+#### 14. `format(workbook_name, sheet_name, reference, style, format)`
 Apply styles (color, bold, number format) to ranges.
 **Usage:** `await format("data.xlsx", "Sheet1", "A1", style="header")`
 
-#### 14. `get_format(workbook_name, sheet_name, reference)`
+#### 15. `get_format(workbook_name, sheet_name, reference)`
 Read formatting properties of a range.
 **Usage:** `await get_format("data.xlsx", "Sheet1", "A1")`
 
-#### 15. `merge_cells(workbook_name, sheet_name, start_cell, end_cell)`
+#### 16. `merge_cells(workbook_name, sheet_name, start_cell, end_cell)`
 Merge a range of cells.
 **Usage:** `await merge_cells("data.xlsx", "Sheet1", "A1", "D1")`
 
-#### 16. `unmerge_cells(workbook_name, sheet_name, start_cell, end_cell)`
+#### 17. `unmerge_cells(workbook_name, sheet_name, start_cell, end_cell)`
 Unmerge previously merged cells.
 **Usage:** `await unmerge_cells("data.xlsx", "Sheet1", "A1", "D1")`
 
-#### 17. `get_merged_cells(workbook_name, sheet_name)`
+#### 18. `get_merged_cells(workbook_name, sheet_name)`
 List all merged cell ranges in a sheet.
 **Usage:** `await get_merged_cells("data.xlsx", "Sheet1")`
 
@@ -220,15 +233,17 @@ List all merged cell ranges in a sheet.
 
 ### 📋 Sheet & Structure Management
 
-#### 18. `manage_sheet(workbook_name, action, sheet_name, ...)`
+### 📋 Sheet & Structure Management
+
+#### 19. `manage_sheet(workbook_name, action, sheet_name, ...)`
 Add, rename, delete, hide, copy, or move worksheets.
 **Usage:** `await manage_sheet("data.xlsx", action="add", sheet_name="NewSheet")`
 
-#### 19. `insert(workbook_name, sheet_name, insert_type, position, count)`
+#### 20. `insert(workbook_name, sheet_name, insert_type, position, count)`
 Insert rows or columns.
 **Usage:** `await insert("data.xlsx", "Sheet1", "row", "5", count=2)`
 
-#### 20. `delete(workbook_name, sheet_name, delete_type, position, count)`
+#### 21. `delete(workbook_name, sheet_name, delete_type, position, count)`
 Delete rows or columns.
 **Usage:** `await delete("data.xlsx", "Sheet1", "column", "C")`
 
@@ -236,15 +251,17 @@ Delete rows or columns.
 
 ### 📊 Excel Tables
 
-#### 21. `create_table(workbook_name, sheet_name, range_ref, table_name)`
+### 📊 Excel Tables
+
+#### 22. `create_table(workbook_name, sheet_name, range_ref, table_name)`
 Convert a range into an official Excel Table (ListObject).
 **Usage:** `await create_table("data.xlsx", "Sheet1", "A1:D10", "SalesTable")`
 
-#### 22. `list_tables(workbook_name)`
+#### 23. `list_tables(workbook_name)`
 List all tables in the workbook.
 **Usage:** `await list_tables("data.xlsx")`
 
-#### 23. `delete_table(workbook_name, sheet_name, table_name, keep_data)`
+#### 24. `delete_table(workbook_name, sheet_name, table_name, keep_data)`
 Remove table structure, optionally keeping data.
 **Usage:** `await delete_table("data.xlsx", "Sheet1", "SalesTable")`
 
@@ -252,13 +269,15 @@ Remove table structure, optionally keeping data.
 
 ### 📈 Charts & Pivot Tables
 
-#### 24. `create_chart(workbook_name, sheet_name, data_range, chart_type, target_cell, ...)`
+### 📈 Charts & Pivot Tables
+
+#### 25. `create_chart(workbook_name, sheet_name, data_range, chart_type, target_cell, ...)`
 Create charts (line, bar, pie, scatter, area) from data.
 - **Live Mode:** Native Excel chart automation.
 - **File Mode:** Basic chart creation via openpyxl.
 **Usage:** `await create_chart("data.xlsx", "Sheet1", "A1:D10", "bar", "F1", title="Sales")`
 
-#### 25. `create_pivot_table(workbook_name, sheet_name, data_range, rows, values, ...)`
+#### 26. `create_pivot_table(workbook_name, sheet_name, data_range, rows, values, ...)`
 Create pivot tables with aggregation.
 - **Live Mode:** Native interactive Excel pivot table.
 - **File Mode:** Static summary table (calculated in Python).
@@ -268,19 +287,21 @@ Create pivot tables with aggregation.
 
 ### ⚙️ Advanced Features
 
-#### 26. `execute_vba(workbook_name, vba_code)`
+### ⚙️ Advanced Features
+
+#### 27. `execute_vba(workbook_name, vba_code)`
 Run custom VBA macros (Windows only).
 **Usage:** `await execute_vba("data.xlsx", "Range('A1').Value = 'VBA'")`
 
-#### 27. `capture_sheet(workbook_name, sheet_name, range_ref)`
+#### 28. `capture_sheet(workbook_name, sheet_name, range_ref)`
 Take a screenshot of a range (Windows only).
 **Usage:** `await capture_sheet("data.xlsx", "Sheet1", "A1:H10")`
 
-#### 28. `validate_cell_reference(cell)`
+#### 29. `validate_cell_reference(cell)`
 Utility to check if a reference string is valid.
 **Usage:** `await validate_cell_reference("A1")`
 
-#### 29. `validate_formula(formula)`
+#### 30. `validate_formula(formula)`
 Validate Excel formula syntax, check for errors, and get correction suggestions.
 **Usage:** `await validate_formula("=SUM(A1:A10)")`
 
@@ -290,19 +311,23 @@ Validate Excel formula syntax, check for errors, and get correction suggestions.
 
 For handling large datasets (>50 rows) safely.
 
-#### 30. `create_transform_session(...)`
+### 🚀 Big Data Sessions (Stateful)
+
+For handling large datasets (>50 rows) safely.
+
+#### 31. `create_transform_session(...)`
 Start a session to process data in chunks.
 **Usage:** `await create_transform_session("data.xlsx", "Sheet1", "A", "B")`
 
-#### 31. `process_chunk(session_id, data)`
+#### 32. `process_chunk(session_id, data)`
 Submit processed data for the current chunk.
 **Usage:** `await process_chunk("session_123", [[1, 2], [3, 4]])`
 
-#### 32. `get_session_status(session_id)`
+#### 33. `get_session_status(session_id)`
 Check progress of a session.
 **Usage:** `await get_session_status("session_123")`
 
-#### 33. `create_parallel_sessions(...)`
+#### 34. `create_parallel_sessions(...)`
 Split work for parallel sub-agents.
 **Usage:** `await create_parallel_sessions("data.xlsx", "Sheet1", "A", "B")`  "success": true,
   "total_matches": 15,
