@@ -170,10 +170,10 @@ Visually select a range in the Excel UI.
 
 ### 🕒 History & Changes
 
-#### 9. `get_recent_changes(limit=10, history_type="undo")`
-Get the history of recent user actions from the Undo or Redo stack.
+#### 9. `get_recent_changes(limit=10)`
+Get the history of recent user actions from both Undo and Redo stacks.
 **Usage:** `await get_recent_changes(limit=5)`
-**Redo:** `await get_recent_changes(limit=5, history_type="redo")`
+**Returns:** `{"undo_history": [...], "redo_history": [...]}`
 
 ---
 

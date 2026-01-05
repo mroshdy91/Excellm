@@ -8,7 +8,7 @@ Refactored version with modular tool organization.
 
 import asyncio
 import logging
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict
 
 from mcp.server.fastmcp import FastMCP
 
@@ -703,36 +703,34 @@ async def find_replace(
 
 
 @mcp.tool()
-async def get_recent_changes(
-    limit: int = 10,
-    history_type: str = "undo",
-) -> dict:
-    """Get the history of recent user actions (Undo/Redo stack).
+async def get_recent_changes(limit: int = 10) -> Dict[str, Any]:
+    """
+    Get the history of recent user actions from the Undo and Redo stacks.
     
-    Useful for "check my last changes" or understanding what the user just did.
+    This tool allows the LLM to "see" what the user has recently done in Excel,
+    or what they have undone. It retrieves descriptive action strings (e.g., "Typing 's' in A1").
     
     Args:
-        limit: Max number of items to retrieve (default: 10)
-        history_type: "undo" (what user did) or "redo" (what user undid)
+        limit: Max number of items to retrieve per stack (default: 10)
         
     Returns:
-        List of actions directly from Excel's Undo/Redo stack.
-        Each item has {"description": "...", "probable_address": "..."}
-        
-    Example:
-        >>> get_recent_changes(limit=1)
-        [{"index": 1, "description": "Typing '100' in A1", "probable_address": "A1"}]
+        Dictionary with:
+        - success: True
+        - undo_history: List of past actions
+        - redo_history: List of undone actions available for redo
+        - count_undo: Number of undo items
+        - count_redo: Number of redo items
     """
-    if history_type.lower() not in ("undo", "redo"):
-        raise ToolError("history_type must be 'undo' or 'redo'")
-        
     try:
-        items = await asyncio.to_thread(get_recent_changes_sync, limit, history_type)
+        # Run syncing logic in thread pool to avoid blocking async loop
+        result = await asyncio.to_thread(get_recent_changes_sync, limit)
+        
         return {
             "success": True,
-            "type": history_type,
-            "count": len(items),
-            "history": items
+            "undo_history": result["undo"],
+            "redo_history": result["redo"],
+            "count_undo": len(result["undo"]),
+            "count_redo": len(result["redo"])
         }
     except Exception as e:
         if isinstance(e, ToolError):
