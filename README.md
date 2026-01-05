@@ -755,7 +755,9 @@ ExceLLM/
 ├── src/
 │   └── excellm/
 │       ├── __init__.py           # Package init
+│       ├── __main__.py           # Module entry point
 │       ├── server.py              # Main MCP server with 34 tools
+│       ├── config.py              # Configuration management
 │       ├── excel_session.py       # Excel COM session manager
 │       ├── validators.py          # Input validation utilities
 │       ├── filters.py             # Filter engine for search
@@ -763,16 +765,28 @@ ExceLLM/
 │       │   ├── __init__.py
 │       │   ├── connection.py     # COM pooling, batch reads
 │       │   ├── errors.py         # ToolError, ErrorCodes
-│       │   └── utils.py          # Consolidated utilities
+│       │   ├── audit.py          # Operation logging and tracking
+│       │   ├── utils.py          # Consolidated utilities
+│       │   ├── engine.py         # Engine abstraction layer
+│       │   ├── com_engine.py     # COM engine implementation
+│       │   └── file_engine.py   # File-based engine implementation
 │       ├── tools/                 # Tool implementations
-│       │   ├── readers.py        # read
-│       │   ├── writers.py        # write
+│       │   ├── readers.py        # read operations
+│       │   ├── writers.py        # write operations
 │       │   ├── formatters.py     # format, get_format
 │       │   ├── sheet_mgmt.py     # manage_sheet, insert, delete
 │       │   ├── range_ops.py      # copy_range, sort_range, find_replace
 │       │   ├── search.py         # search with filters
-│       │   └── workbook.py       # list_workbooks, select_range
+│       │   ├── workbook.py       # list_workbooks, select_range
+│       │   ├── chart.py         # chart creation
+│       │   ├── pivot.py         # pivot table operations
+│       │   ├── history.py        # undo/redo history
+│       │   ├── session.py        # transform sessions
+│       │   ├── table_ops.py     # Excel table operations
+│       │   ├── screen_capture.py # screenshot capture
+│       │   └── vba_execution.py # VBA macro execution
 │       └── inspection/            # Sheet/workbook inspection
+│           ├── __init__.py
 │           ├── explore.py        # Sheet-level radar
 │           ├── inspect_workbook.py
 │           ├── types.py          # Pydantic schemas
@@ -789,30 +803,61 @@ ExceLLM/
    - Provides 34 MCP tools
    - Handles tool registration and routing
    - Manages server lifecycle
-   - Dual-engine architecture support
+   - Dual-engine architecture support (COM + File)
+   - Centralized error handling
 
 2. **Core Module** (`core/`):
-   - Thread-local COM connection pooling
-   - Batch range reads for performance
-   - Centralized error handling
-   - Engine abstraction layer (COM + File)
+   - **connection.py**: Thread-local COM connection pooling, batch range reads for performance
+   - **errors.py**: Centralized error handling (ToolError, ErrorCodes)
+   - **audit.py**: Operation logging and tracking for debugging
+   - **utils.py**: Consolidated utility functions
+   - **engine.py**: Engine abstraction layer for cross-platform support
+   - **com_engine.py**: Windows COM engine implementation for live Excel operations
+   - **file_engine.py**: Cross-platform file-based engine using openpyxl
 
 3. **Tools Module** (`tools/`):
-   - Modular tool implementations
-   - VBA execution, screen capture, table operations
-   - Session management for large datasets
-   - Clean separation of concerns
+   - **readers.py**: Read operations with filtering and batch support
+   - **writers.py**: Write operations with safety checks
+   - **formatters.py**: Format, get_format, merge/unmerge cells
+   - **sheet_mgmt.py**: manage_sheet, insert, delete operations
+   - **range_ops.py**: copy_range, sort_range, find_replace
+   - **search.py**: Server-side search with advanced filters
+   - **workbook.py**: list_workbooks, select_range operations
+   - **chart.py**: Chart creation (line, bar, pie, scatter, area)
+   - **pivot.py**: Pivot table operations with aggregation
+   - **history.py**: Undo/redo history tracking
+   - **session.py**: Transform sessions for large datasets
+   - **table_ops.py**: Excel table operations (create, list, delete)
+   - **screen_capture.py**: Screenshot capture (Windows only)
+   - **vba_execution.py**: VBA macro execution (Windows only)
 
-4. **ExcelSessionManager** (`excel_session.py`):
-   - Connects to running Excel instance
+4. **Inspection Module** (`inspection/`):
+   - **explore.py**: Sheet-level analysis with quick/deep modes
+   - **inspect_workbook.py**: Fast workbook-level radar
+   - **types.py**: Pydantic schemas for type safety
+   - **utils.py**: Inspection utilities
+
+5. **ExcelSessionManager** (`excel_session.py`):
+   - Connects to running Excel instance (Windows)
    - Wraps COM operations with async support
    - Provides thread-safe access to Excel
+   - Handles Excel COM lifecycle
 
-5. **Validators** (`validators.py`):
+6. **Configuration** (`config.py`):
+   - Centralized configuration management
+   - Environment variable support
+   - Default settings and overrides
+
+7. **Validators** (`validators.py`):
    - Cell reference format validation
    - Workbook/sheet name validation
    - Range parsing and validation
    - Value type checking
+
+8. **Filters** (`filters.py`):
+   - Server-side filtering engine
+   - Advanced search capabilities
+   - Multiple filter types support
 
 ## Development
 
