@@ -7,11 +7,10 @@ This is a COM-only feature (Windows + Excel running).
 import base64
 import os
 import tempfile
-from typing import Optional
 import time
 
 from ..core.connection import get_excel_app, get_workbook, get_worksheet
-from ..core.errors import ToolError, ErrorCodes
+from ..core.errors import ErrorCodes, ToolError
 
 
 def capture_sheet_sync(
@@ -52,7 +51,7 @@ def capture_sheet_sync(
         app = get_excel_app()
         workbook = get_workbook(app, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         # Determine range to capture
         if range_ref:
             try:
@@ -65,30 +64,30 @@ def capture_sheet_sync(
         else:
             # Use UsedRange
             capture_range = worksheet.UsedRange
-            
+
         # Get the actual range address for reporting
         range_address = capture_range.Address.replace("$", "")
-        
+
         # Activate workbook and sheet for proper capture
         workbook.Activate()
         worksheet.Activate()
         capture_range.Select()
-        
+
         # Create temporary file for image
         temp_dir = tempfile.gettempdir()
         temp_file = os.path.join(temp_dir, f"excel_capture_{int(time.time() * 1000)}.png")
-        
+
         try:
             # Method 1: Export chart containing the range as picture
             # This is more reliable across Excel versions
-            
+
             # Copy range as picture
             # xlScreen = 1, xlBitmap = 2
             capture_range.CopyPicture(Appearance=1, Format=2)
-            
+
             # Brief pause to allow clipboard to populate
             time.sleep(0.2)
-            
+
             # Create a temporary chart to paste and export
             chart_obj = worksheet.ChartObjects().Add(
                 Left=capture_range.Left,
@@ -96,34 +95,33 @@ def capture_sheet_sync(
                 Width=capture_range.Width,
                 Height=capture_range.Height
             )
-            
+
             # Activate chart object to ensure Paste targets it
             chart_obj.Activate()
             chart = chart_obj.Chart
-            
+
             # Paste the picture and export
             chart.Paste()
-            
+
             # Export to file
             chart.Export(temp_file, "PNG")
-            
+
             # Delete the temporary chart
             chart_obj.Delete()
-            
+
             # Clear clipboard
             app.CutCopyMode = False
-            
+
         except Exception as e:
             # Method 2: Try alternative approach using chart export
             try:
                 # Alternative: Use Windows clipboard and save
+
                 import win32clipboard
-                from PIL import Image
-                import io
-                
+
                 # Copy range as picture
                 capture_range.CopyPicture(Appearance=1, Format=2)
-                
+
                 # Get from clipboard
                 win32clipboard.OpenClipboard()
                 try:
@@ -134,22 +132,22 @@ def capture_sheet_sync(
                     pass
                 finally:
                     win32clipboard.CloseClipboard()
-                    
+
                 app.CutCopyMode = False
-                
+
             except Exception as e2:
                 raise ToolError(
                     f"Failed to capture sheet: {str(e)}. Alternative method also failed: {str(e2)}",
                     code=ErrorCodes.WRITE_FAILED
                 )
-        
+
         # Read the image file
         if not os.path.exists(temp_file):
             raise ToolError(
                 "Screenshot capture failed - no image file created",
                 code=ErrorCodes.WRITE_FAILED
             )
-        
+
         if output_format == "file":
             # Move to destination
             if output_path:
@@ -158,7 +156,7 @@ def capture_sheet_sync(
                 final_path = output_path
             else:
                 final_path = temp_file
-            
+
             return {
                 "success": True,
                 "format": "file",
@@ -171,13 +169,13 @@ def capture_sheet_sync(
             # Read and encode as base64
             with open(temp_file, 'rb') as f:
                 image_data = base64.b64encode(f.read()).decode('utf-8')
-            
+
             # Clean up temp file
             try:
                 os.remove(temp_file)
             except Exception:
                 pass
-            
+
             return {
                 "success": True,
                 "format": "base64",
@@ -186,7 +184,7 @@ def capture_sheet_sync(
                 "range_captured": range_address,
                 "sheet_name": sheet_name,
             }
-            
+
     except ToolError:
         raise
     except Exception as e:

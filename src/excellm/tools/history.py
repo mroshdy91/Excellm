@@ -1,8 +1,9 @@
 
 import re
+from typing import Any, Dict, List
+
 import pythoncom
 import win32com.client as win32
-from typing import List, Dict, Any, Optional
 
 from ..core.errors import ToolError
 
@@ -25,7 +26,7 @@ def get_recent_changes_sync(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
             excel = win32.GetActiveObject("Excel.Application")
         except Exception as e:
             raise ToolError("Could not connect to Excel. Is it running?") from e
-            
+
         def get_stack(control_id):
             """Helper to extract items from a CommandBar control"""
             control = None
@@ -39,31 +40,31 @@ def get_recent_changes_sync(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
                                 control = c
                                 break
                         break
-                
+
                 # Fallback
                 if not control:
                     control = excel.CommandBars.FindControl(Id=control_id)
-                    
+
                 if not control:
                     return []
-                    
+
                 items = []
                 # ListCount access check
                 try:
                     count = control.ListCount
                 except:
                     return []
-                    
+
                 num_items = min(limit, count)
                 for i in range(1, num_items + 1):
                     try:
                         desc = control.List(i)
-                        
+
                         probable_address = None
                         match = re.search(r"in\s+((?:['\w\s]+!)?\$?[A-Z]{1,3}\$?[0-9]{1,7})$", desc, re.IGNORECASE)
                         if match:
                             probable_address = match.group(1).strip()
-                        
+
                         items.append({
                             "index": i,
                             "description": desc,
@@ -79,7 +80,7 @@ def get_recent_changes_sync(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
             "undo": get_stack(ID_UNDO),
             "redo": get_stack(ID_REDO)
         }
-        
+
     except Exception as e:
         if isinstance(e, ToolError):
             raise

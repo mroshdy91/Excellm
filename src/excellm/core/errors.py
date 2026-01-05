@@ -14,7 +14,7 @@ class ToolError(Exception):
         code: Optional error code for categorization
         details: Optional additional error details
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -25,7 +25,7 @@ class ToolError(Exception):
         self.message = message
         self.code = code or "TOOL_ERROR"
         self.details = details or {}
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for error response."""
         result = {
@@ -56,7 +56,7 @@ def create_error_response(
             "error": error.to_dict(),
             "tool": tool_name,
         }
-    
+
     return {
         "success": False,
         "error": {
@@ -70,7 +70,7 @@ def create_error_response(
 # Common error codes
 class ErrorCodes:
     """Standard error codes for consistent error handling."""
-    
+
     EXCEL_NOT_RUNNING = "EXCEL_NOT_RUNNING"
     NO_WORKBOOK_OPEN = "NO_WORKBOOK_OPEN"
     WORKBOOK_NOT_FOUND = "WORKBOOK_NOT_FOUND"

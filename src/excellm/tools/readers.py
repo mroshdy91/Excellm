@@ -4,30 +4,20 @@ Contains tools for reading cells, ranges, and getting unique values.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..core.connection import (
+    _init_com,
     get_excel_app,
     get_workbook,
     get_worksheet,
-    get_active_sheet,
-    batch_read_values,
-    _init_com,
 )
-from ..core.errors import ToolError, ErrorCodes
 from ..core.utils import (
-    number_to_column,
-    column_to_number,
-    is_cell_empty,
     get_cell_type,
+    is_cell_empty,
 )
 from ..validators import (
-    validate_cell_format,
-    validate_range_format,
-    validate_sheet_name,
-    validate_workbook_name,
     get_excel_error_info,
-    parse_range,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,17 +39,17 @@ def read_cell_sync(
         Dictionary with cell value and metadata
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     rng = worksheet.Range(cell)
     value = rng.Value
-    
+
     # Determine value type
     value_type = get_cell_type(value)
-    
+
     result = {
         "success": True,
         "workbook": workbook_name,
@@ -68,7 +58,7 @@ def read_cell_sync(
         "value": str(value) if value is not None else "",
         "type": value_type,
     }
-    
+
     # Check for formula
     try:
         formula = rng.Formula
@@ -78,13 +68,13 @@ def read_cell_sync(
             result["formula"] = None
     except Exception:
         result["formula"] = None
-    
+
     # Check for Excel error codes
     error_info = get_excel_error_info(value)
     if error_info:
         result["error_code"] = error_info[0]
         result["error_message"] = error_info[1]
-    
+
     return result
 
 
@@ -109,32 +99,32 @@ def read_range_sync(
         - hint: suggestion to narrow range
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Get range reference
     if range_str:
         rng = worksheet.Range(range_str)
     else:
         rng = worksheet.UsedRange
         range_str = rng.Address.replace("$", "")
-    
+
     # Use batch read for performance
     values = rng.Value
-    
+
 
     data = []
     error_codes = []
     error_messages = []
-    
+
     if values is not None:
         # Check if values is a list/tuple (range values) or scalar (single value)
         if isinstance(values, (list, tuple)):
             # Check if values is 2D
             is_2d = len(values) > 0 and isinstance(values[0], (list, tuple))
-            
+
             if is_2d:
                 for row in values:
                     row_data = []
@@ -181,15 +171,15 @@ def read_range_sync(
             else:
                 row_err_code = [None]
                 row_err_msg = [None]
-            
+
             data.append(row_data)
             error_codes.append(row_err_code)
             error_messages.append(row_err_msg)
-    
+
     # Calculate dimensions
     rows = len(data)
     cols = len(data[0]) if data else 0
-    
+
     # Pagination: apply max_rows limit if specified
     truncated = False
     total_available = rows
@@ -199,7 +189,7 @@ def read_range_sync(
         error_messages = error_messages[:max_rows]
         truncated = True
         rows = max_rows
-    
+
     result = {
         "success": True,
         "workbook": workbook_name,
@@ -213,13 +203,13 @@ def read_range_sync(
         "end_row": rng.Row + rows - 1,
         "end_col": rng.Column + cols - 1,
     }
-    
+
     # Add truncation info if data was limited
     if truncated:
         result["truncated"] = True
         result["total_available"] = total_available
         result["hint"] = f"Returned {max_rows} of {total_available} rows. Narrow range or use offset."
-    
+
     # Get formulas
     try:
         formulas = rng.Formula
@@ -248,17 +238,17 @@ def read_range_sync(
                     formula_data.append([formulas])
                 else:
                     formula_data.append([None])
-        
+
         result["formulas"] = formula_data if formula_data else None
     except Exception:
         result["formulas"] = None
-    
+
     # Only include error fields if there are errors
     has_errors = any(any(cell for cell in row) for row in error_codes)
     if has_errors:
         result["error_codes"] = error_codes
         result["error_messages"] = error_messages
-    
+
     return result
 
 
@@ -278,24 +268,24 @@ def get_unique_values_sync(
         Dictionary with unique values and counts
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Get range
     if range_str:
         rng = worksheet.Range(range_str)
     else:
         rng = worksheet.UsedRange
         range_str = rng.Address.replace("$", "")
-    
+
     # Read all values
     values = rng.Value
-    
+
     # Count occurrences
     value_counts = {}
-    
+
     if values:
         if isinstance(values, (list, tuple)):
             if len(values) > 0 and isinstance(values[0], (list, tuple)):
@@ -313,14 +303,14 @@ def get_unique_values_sync(
             if not is_cell_empty(values):
                 val = str(values)
                 value_counts[val] = 1
-    
+
     # Sort by count descending
     sorted_values = sorted(
         [{"value": k, "count": v} for k, v in value_counts.items()],
         key=lambda x: x["count"],
         reverse=True
     )
-    
+
     return {
         "success": True,
         "workbook": workbook_name,
@@ -338,16 +328,16 @@ def get_current_selection_sync() -> Dict[str, Any]:
         Dictionary with selection details
     """
     _init_com()
-    
+
     app = get_excel_app()
-    
+
     if app.Workbooks.Count == 0:
         return {
             "success": True,
             "has_selection": False,
             "message": "No workbook is open"
         }
-    
+
     try:
         selection = app.Selection
         if not selection:
@@ -355,15 +345,15 @@ def get_current_selection_sync() -> Dict[str, Any]:
                 "success": True,
                 "has_selection": False,
             }
-        
+
         address = selection.Address.replace("$", "")
         workbook = app.ActiveWorkbook.Name
         sheet = app.ActiveSheet.Name
-        
+
         rows = selection.Rows.Count
         cols = selection.Columns.Count
         cell_count = selection.Cells.Count
-        
+
         # Determine selection type
         if rows == 1 and cols == 1:
             selection_type = "single_cell"
@@ -373,7 +363,7 @@ def get_current_selection_sync() -> Dict[str, Any]:
             selection_type = "entire_row"
         else:
             selection_type = "range"
-        
+
         result = {
             "success": True,
             "has_selection": True,
@@ -386,7 +376,7 @@ def get_current_selection_sync() -> Dict[str, Any]:
             "workbook": workbook,
             "sheet": sheet,
         }
-        
+
         # Add value(s) for reasonable selections
         if cell_count == 1:
             result["value"] = selection.Value
@@ -406,9 +396,9 @@ def get_current_selection_sync() -> Dict[str, Any]:
         else:
             result["value"] = None
             result["values"] = None
-        
+
         return result
-        
+
 
     except Exception as e:
         return {
@@ -434,23 +424,23 @@ def batch_read_sync(
     """
     _init_com()
     app = get_excel_app()
-    
+
     # Cache workbook reference to avoid repeated lookups
     cached_wb_name = None
     cached_wb = None
-    
+
     results = []
-    
+
     for i, req in enumerate(batch):
         try:
             # Determine target workbook
             wb_name = req.get("workbook", workbook_name)
-            
+
             # Get workbook object (reuse if same)
             if wb_name != cached_wb_name:
                 cached_wb = get_workbook(app, wb_name)
                 cached_wb_name = wb_name
-                
+
             # Determine sheet
             sheet_name = req.get("sheet")
             if not sheet_name:
@@ -459,10 +449,10 @@ def batch_read_sync(
                 sheet_name = sheet.Name
             else:
                 sheet = get_worksheet(cached_wb, sheet_name)
-                
+
             # Determine range
             range_str = req.get("range") # None = UsedRange
-            
+
             # Perform read
             # reuse logic from read_range_sync but we have objects already
             if range_str:
@@ -470,10 +460,10 @@ def batch_read_sync(
             else:
                 rng = sheet.UsedRange
                 range_str = rng.Address.replace("$", "")
-                
+
             # Read value (fastest method)
             val = rng.Value
-            
+
             # Process value similar to read_range_sync
             data = []
             if val is not None:
@@ -486,10 +476,10 @@ def batch_read_sync(
                 else:
                     # Scalar
                     data = [[str(val)]]
-                    
+
             rows = len(data)
             cols = len(data[0]) if data else 0
-            
+
             results.append({
                 "request_index": i,
                 "success": True,
@@ -500,14 +490,14 @@ def batch_read_sync(
                 "rows": rows,
                 "cols": cols
             })
-            
+
         except Exception as e:
             results.append({
                 "request_index": i,
                 "success": False,
                 "error": str(e)
             })
-            
+
     return {
         "success": True,
         "results": results,

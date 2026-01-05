@@ -4,15 +4,15 @@ Provides thread-local connection pooling and batch read operations
 for improved performance with Excel COM automation.
 """
 
-import threading
 import functools
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+import threading
+from typing import Any, Callable, Dict, List, Tuple, TypeVar
 
 import pythoncom
 import win32com.client as win32
 
-from .errors import ToolError, ErrorCodes
-from .utils import normalize_address, number_to_column
+from .errors import ErrorCodes, ToolError
+from .utils import number_to_column
 
 # Thread-local storage for COM connections
 _thread_local = threading.local()
@@ -55,7 +55,7 @@ class COMContext:
     
     Main thread keeps COM alive for performance; worker threads clean up.
     """
-    
+
     def __init__(self, force_cleanup: bool = False):
         """Initialize context.
         
@@ -65,21 +65,21 @@ class COMContext:
         """
         self._force_cleanup = force_cleanup
         self._was_initialized = False
-    
+
     def __enter__(self):
         self._was_initialized = getattr(_thread_local, '_com_initialized', False)
         _init_com()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         # Only uninit if:
         # 1. force_cleanup is True, OR
         # 2. This is a worker thread (not main) AND we initialized COM
         is_main = threading.current_thread() is threading.main_thread()
-        
+
         if self._force_cleanup or (not is_main and not self._was_initialized):
             _uninit_com()
-        
+
         return False  # Don't suppress exceptions
 
 
@@ -96,10 +96,10 @@ def get_excel_app():
         ToolError: If Excel is not running
     """
     _init_com()
-    
+
     # Check if we have a cached connection
     app = getattr(_thread_local, 'excel_app', None)
-    
+
     if app is not None:
         # Verify connection is still valid
         try:
@@ -108,7 +108,7 @@ def get_excel_app():
         except Exception:
             # Connection is stale, need to reconnect
             _thread_local.excel_app = None
-    
+
     # Create new connection
     try:
         app = win32.GetActiveObject("Excel.Application")
@@ -180,28 +180,28 @@ def with_excel_context(func: F) -> F:
     @functools.wraps(func)
     def wrapper(workbook_name: str, sheet_name: str, *args, **kwargs):
         _init_com()
-        
+
         app = get_excel_app()
         workbook = get_workbook(app, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         # Check for protected/read-only
         if worksheet.ProtectContents:
             raise ToolError(
                 f"Worksheet '{sheet_name}' is protected.",
                 code=ErrorCodes.PROTECTED_SHEET
             )
-        
+
         return func(
-            workbook_name, 
-            sheet_name, 
-            *args, 
-            app=app, 
-            workbook=workbook, 
+            workbook_name,
+            sheet_name,
+            *args,
+            app=app,
+            workbook=workbook,
             worksheet=worksheet,
             **kwargs
         )
-    
+
     return wrapper  # type: ignore
 
 
@@ -223,14 +223,14 @@ def batch_read_values(
     """
     range_obj = worksheet.Range(range_str)
     values = range_obj.Value2
-    
+
     if values is None:
         return [[]]
-    
+
     # Single cell returns scalar
     if not isinstance(values, tuple):
         return [[values]]
-    
+
     # Single row returns 1D tuple, single column returns tuple of 1-tuples
     # Multi-cell range returns tuple of tuples
     result = []
@@ -240,7 +240,7 @@ def batch_read_values(
         else:
             # Single column case - each "row" is a single value
             result.append([row])
-    
+
     return result
 
 
@@ -267,17 +267,17 @@ def batch_read_with_positions(
     """
     # Build range address for bounding rectangle
     range_str = f"{number_to_column(start_col)}{start_row}:{number_to_column(end_col)}{end_row}"
-    
+
     # Batch read the entire rectangle
     all_values = batch_read_values(worksheet, range_str)
-    
+
     # Extract requested positions
     result = {}
     for row, col in positions:
         # Convert to 0-based indices relative to start
         row_idx = row - start_row
         col_idx = col - start_col
-        
+
         if 0 <= row_idx < len(all_values):
             row_data = all_values[row_idx]
             if 0 <= col_idx < len(row_data):
@@ -286,7 +286,7 @@ def batch_read_with_positions(
                 result[(row, col)] = None
         else:
             result[(row, col)] = None
-    
+
     return result
 
 
@@ -315,14 +315,14 @@ def get_active_workbook():
     """
     app = get_excel_app()
     ensure_workbook_open()
-    
+
     wb = app.ActiveWorkbook
     if not wb:
         raise ToolError(
             "No active workbook found.",
             code=ErrorCodes.NO_WORKBOOK_OPEN
         )
-    
+
     return wb
 
 
@@ -337,7 +337,7 @@ def get_active_sheet():
     """
     workbook = get_active_workbook()
     app = get_excel_app()
-    
+
     try:
         worksheet = app.ActiveSheet
         return workbook, worksheet

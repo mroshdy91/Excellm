@@ -7,15 +7,15 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from ..core.connection import (
+    _init_com,
     get_excel_app,
     get_workbook,
     get_worksheet,
-    _init_com,
 )
-from ..core.errors import ToolError, ErrorCodes
+from ..core.errors import ToolError
 from ..core.utils import (
-    number_to_column,
     column_to_number,
+    number_to_column,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,11 +41,11 @@ def insert_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     if insert_type.lower() == "row":
         # Parse position (could be "5" or "5:10")
         if ":" in position:
@@ -55,11 +55,11 @@ def insert_sync(
             count = end_row - start_row + 1
         else:
             start_row = int(position)
-        
+
         # Insert rows
         for _ in range(count):
             worksheet.Rows(start_row).Insert()
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -69,7 +69,7 @@ def insert_sync(
             "at": position,
             "message": f"Inserted {count} row(s) at row {position}"
         }
-    
+
     elif insert_type.lower() == "column":
         # Parse position (could be "C" or "3" or "C:E")
         if ":" in position:
@@ -84,11 +84,11 @@ def insert_sync(
                 start_col = number_to_column(int(position))
             else:
                 start_col = position.upper()
-        
+
         # Insert columns
         for _ in range(count):
             worksheet.Columns(start_col).Insert()
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -98,7 +98,7 @@ def insert_sync(
             "at": start_col,
             "message": f"Inserted {count} column(s) at column {start_col}"
         }
-    
+
     else:
         raise ToolError(f"Invalid insert_type '{insert_type}'. Must be 'row' or 'column'.")
 
@@ -123,11 +123,11 @@ def delete_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     if delete_type.lower() == "row":
         # Parse position
         if ":" in position:
@@ -144,7 +144,7 @@ def delete_sync(
                 worksheet.Rows(f"{start_row}:{start_row + count - 1}").Delete()
             else:
                 worksheet.Rows(start_row).Delete()
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -154,7 +154,7 @@ def delete_sync(
             "at": position,
             "message": f"Deleted {count} row(s) at row {position}"
         }
-    
+
     elif delete_type.lower() == "column":
         # Parse position
         if ":" in position:
@@ -177,7 +177,7 @@ def delete_sync(
                 worksheet.Columns(f"{start_col}:{end_col}").Delete()
             else:
                 worksheet.Columns(start_col).Delete()
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -187,7 +187,7 @@ def delete_sync(
             "at": start_col if 'start_col' in dir() else position,
             "message": f"Deleted {count} column(s) at column {position}"
         }
-    
+
     else:
         raise ToolError(f"Invalid delete_type '{delete_type}'. Must be 'row' or 'column'.")
 
@@ -220,17 +220,17 @@ def manage_sheet_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
-    
+
     if action == "add":
         if not sheet_name:
             raise ToolError("sheet_name is required for 'add' action")
-        
+
         new_sheet = workbook.Worksheets.Add()
         new_sheet.Name = sheet_name
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -238,13 +238,13 @@ def manage_sheet_sync(
             "sheet": sheet_name,
             "message": f"Added new sheet '{sheet_name}'"
         }
-    
+
     elif action == "remove":
         if not sheet_name:
             raise ToolError("sheet_name is required for 'remove' action")
-        
+
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         # Check if sheet is empty (unless force_delete)
         if not force_delete:
             used_range = worksheet.UsedRange
@@ -254,14 +254,14 @@ def manage_sheet_sync(
                     f"Sheet '{sheet_name}' is not empty ({cells_count} cells in use). "
                     "Use force_delete=True to delete anyway."
                 )
-        
+
         # Disable alerts to prevent confirmation dialog
         app.DisplayAlerts = False
         try:
             worksheet.Delete()
         finally:
             app.DisplayAlerts = True
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -269,18 +269,18 @@ def manage_sheet_sync(
             "sheet": sheet_name,
             "message": f"Removed sheet '{sheet_name}'"
         }
-    
+
     elif action == "hide":
         sheets_to_hide = sheet_names if sheet_names else [sheet_name] if sheet_name else []
         if not sheets_to_hide:
             raise ToolError("sheet_name or sheet_names is required for 'hide' action")
-        
+
         results = []
         for name in sheets_to_hide:
             worksheet = get_worksheet(workbook, name)
             worksheet.Visible = 0  # xlSheetHidden
             results.append({"sheet": name, "action": "hidden"})
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -288,18 +288,18 @@ def manage_sheet_sync(
             "results": results,
             "count": len(results)
         }
-    
+
     elif action == "unhide":
         sheets_to_unhide = sheet_names if sheet_names else [sheet_name] if sheet_name else []
         if not sheets_to_unhide:
             raise ToolError("sheet_name or sheet_names is required for 'unhide' action")
-        
+
         results = []
         for name in sheets_to_unhide:
             worksheet = get_worksheet(workbook, name)
             worksheet.Visible = -1  # xlSheetVisible
             results.append({"sheet": name, "action": "unhidden"})
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -307,18 +307,18 @@ def manage_sheet_sync(
             "results": results,
             "count": len(results)
         }
-    
+
     elif action == "copy":
         if not sheet_name:
             raise ToolError("sheet_name is required for 'copy' action")
-        
+
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         # Determine target workbook
         target_wb = workbook
         if target_workbook:
             target_wb = get_workbook(app, target_workbook)
-        
+
         # Copy sheet
         if reference_sheet and position:
             ref_sheet = get_worksheet(target_wb, reference_sheet)
@@ -329,11 +329,11 @@ def manage_sheet_sync(
         else:
             # Copy to end of target workbook
             worksheet.Copy(After=target_wb.Worksheets(target_wb.Worksheets.Count))
-        
+
         # Rename if target_name provided
         if target_name:
             target_wb.Worksheets(target_wb.Worksheets.Count).Name = target_name
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -343,18 +343,18 @@ def manage_sheet_sync(
             "target_sheet": target_name or f"{sheet_name} (2)",
             "message": f"Copied sheet '{sheet_name}'"
         }
-    
+
     elif action == "move":
         if not sheet_name:
             raise ToolError("sheet_name is required for 'move' action")
-        
+
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         # Determine target workbook
         target_wb = workbook
         if target_workbook:
             target_wb = get_workbook(app, target_workbook)
-        
+
         # Move sheet
         if reference_sheet and position:
             ref_sheet = get_worksheet(target_wb, reference_sheet)
@@ -365,7 +365,7 @@ def manage_sheet_sync(
         else:
             # Move to end
             worksheet.Move(After=target_wb.Worksheets(target_wb.Worksheets.Count))
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -374,17 +374,17 @@ def manage_sheet_sync(
             "target_workbook": target_workbook or workbook_name,
             "message": f"Moved sheet '{sheet_name}'"
         }
-    
+
     elif action == "rename":
         if not sheet_name:
             raise ToolError("sheet_name is required for 'rename' action")
         if not target_name:
             raise ToolError("target_name is required for 'rename' action")
-        
+
         worksheet = get_worksheet(workbook, sheet_name)
         old_name = worksheet.Name
         worksheet.Name = target_name
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -393,7 +393,7 @@ def manage_sheet_sync(
             "new_name": target_name,
             "message": f"Renamed sheet '{old_name}' to '{target_name}'"
         }
-    
+
     else:
         raise ToolError(
             f"Invalid action '{action}'. Must be one of: "

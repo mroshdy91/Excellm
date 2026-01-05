@@ -6,7 +6,7 @@ methods for reading, writing, and managing Excel data via COM automation.
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import pythoncom
 import win32com.client as win32
@@ -20,20 +20,18 @@ class ToolError(Exception):
 pythoncom.CoInitialize()
 
 
+from .filters import FilterEngine
 from .validators import (
-    validate_cell_format,
-    validate_range_format,
-    parse_reference_string,
-    validate_sheet_name,
-    validate_workbook_name,
-    validate_value_type,
     get_cell_type,
     get_excel_error_info,
     parse_range,
-    validate_data_dimensions,
+    parse_reference_string,
+    validate_cell_format,
+    validate_range_format,
+    validate_sheet_name,
+    validate_value_type,
+    validate_workbook_name,
 )
-
-from .filters import FilterEngine, FilterGroup, SingleFilter
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +109,7 @@ class ExcelSessionManager:
         """Normalize jagged array to rectangular by padding with empty values."""
         if not data:
             return []
-        
+
         # Find maximum columns in any row
         max_cols = 0
         for row in data:
@@ -119,7 +117,7 @@ class ExcelSessionManager:
                 max_cols = max(max_cols, len(row))
             else:
                 max_cols = max(max_cols, 1)
-        
+
         # Pad shorter rows
         normalized = []
         for row in data:
@@ -131,7 +129,7 @@ class ExcelSessionManager:
             else:
                 # Handle non-list row (shouldn't happen with 2D array input)
                 normalized.append([row] + [""] * (max_cols - 1))
-        
+
         return normalized
 
     def _sanitize_value(self, value: Any) -> Any:
@@ -175,21 +173,21 @@ class ExcelSessionManager:
         app = win32.GetActiveObject("Excel.Application")
         workbook = app.Workbooks(workbook_name)
         worksheet = workbook.Worksheets(sheet_name)
-        
+
         # Activate workbook window if not active
         # (Using Activate on workbook might be needed if multiple Excel windows are open)
         try:
             workbook.Activate()
         except:
             pass # Ignore if fail
-            
+
         # Activate worksheet
         worksheet.Activate()
-        
+
         # Select target range
         rng = worksheet.Range(reference)
         rng.Select()
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -411,18 +409,18 @@ class ExcelSessionManager:
         # Get range reference with optimization for large ranges
         if range_str:
             target_rng = worksheet.Range(range_str)
-            
+
             # Optimization: If it's a whole row or column, intersect with UsedRange
             # parse_range returns empty strings for missing components
             start_col, start_row, end_col, end_row = parse_range(range_str)
             is_whole_col = not start_row and not end_row
             is_whole_row = not start_col and not end_col
-            
+
             if is_whole_col or is_whole_row:
                 used_rng = worksheet.UsedRange
                 # Intersect target range with UsedRange
                 intersect_rng = self.excel_app.Intersect(target_rng, used_rng)
-                
+
                 if intersect_rng:
                     # Further Optimization: If intersection is large, shrink to actual data
                     # (UsedRange can be bloated by formatting or deleted data)
@@ -434,17 +432,17 @@ class ExcelSessionManager:
                         first_cell = intersect_rng.Cells(1, 1)
                         s_row = intersect_rng.Row
                         s_col = intersect_rng.Column
-                        
+
                         # Try Values first (usually more consistent for what the user sees)
                         last_row_cell = intersect_rng.Find("*", After=first_cell, LookIn=-4163, LookAt=2, SearchOrder=1, SearchDirection=2)
                         last_col_cell = intersect_rng.Find("*", After=first_cell, LookIn=-4163, LookAt=2, SearchOrder=2, SearchDirection=2)
-                        
+
                         # Fallback to Formulas if Values didn't find much (e.g. only formulas in cells)
                         if not last_row_cell:
                             last_row_cell = intersect_rng.Find("*", After=first_cell, LookIn=1, LookAt=2, SearchOrder=1, SearchDirection=2)
                         if not last_col_cell:
                             last_col_cell = intersect_rng.Find("*", After=first_cell, LookIn=1, LookAt=2, SearchOrder=2, SearchDirection=2)
-                        
+
                         if last_row_cell and last_col_cell:
                             # Recalculate range based on last data row/col
                             if is_whole_col:
@@ -465,7 +463,7 @@ class ExcelSessionManager:
                                 )
                     except Exception as e:
                         logger.debug(f"Deep search optimization failed: {str(e)}")
-                    
+
                     rng = intersect_rng
                     range_str = rng.Address.replace("$", "")
                 else:
@@ -543,7 +541,7 @@ class ExcelSessionManager:
                 else:
                     row_err_code = [None]
                     row_err_msg = [None]
-                
+
                 data.append(row_data)
                 error_codes.append(row_err_code)
                 error_messages.append(row_err_msg)
@@ -622,10 +620,10 @@ class ExcelSessionManager:
     ) -> Dict[str, Any]:
         """Write to a single cell."""
         await self._connect()
-        
+
         # Sanitize value
         sanitized_value = self._sanitize_value(value)
-        
+
         if dry_run:
             # For dry run, we still need to validate existence and overwrite constraints
             # but we use a sync wrapper that doesn't actually write
@@ -665,7 +663,7 @@ class ExcelSessionManager:
 
         if not dry_run:
             worksheet.Range(cell).Value = value
-            
+
             if activate:
                 try:
                     workbook.Activate()
@@ -752,7 +750,7 @@ class ExcelSessionManager:
                     max_cols = max(max_cols, len(row))
                 else:
                     max_cols = max(max_cols, 1)
-            
+
             normalized_data = []
             for row in data:
                 if isinstance(row, (list, tuple)):
@@ -895,12 +893,12 @@ class ExcelSessionManager:
 
         # Parse range for dimensions
         start_col, start_row, end_col, end_row = parse_range(range_str)
-        
+
         # Calculate expected dimensions from range
         # (Handling whole row/column cases)
         exp_rows = target_rng.Rows.Count
         exp_cols = target_rng.Columns.Count
-        
+
         # Calculate actual dimensions from data
         data_rows = len(data)
         data_cols = len(data[0]) if data and data[0] else 0
@@ -922,11 +920,11 @@ class ExcelSessionManager:
                 start_col, start_row, end_col, end_row = parse_range(range_str)
                 s_row = int(start_row) if start_row else 1
                 s_col_num = self._column_letter_to_number(start_col) if start_col else 1
-                
+
                 # Calculate required dimensions from data
                 data_rows = len(data)
                 data_cols = len(data[0]) if data and data[0] else 0
-                
+
                 if data_rows == 0 or data_cols == 0:
                      return {"success": True, "message": "No data to write"}
 
@@ -935,7 +933,7 @@ class ExcelSessionManager:
                 e_col_num = s_col_num + data_cols - 1
                 e_col_letter = self._number_to_column(e_col_num)
                 check_range_str = f"{self._number_to_column(s_col_num)}{s_row}:{e_col_letter}{e_row}"
-                
+
                 range_values = worksheet.Range(check_range_str).Value
                 if range_values is not None:
 
@@ -981,7 +979,7 @@ class ExcelSessionManager:
         if not dry_run:
             # Perform write
             worksheet.Range(range_str).Value = data
-            
+
             if activate:
                 try:
                     workbook.Activate()
@@ -996,7 +994,7 @@ class ExcelSessionManager:
         # Calculate absolute coordinates
         s_col_letter, s_row_num, e_col_letter, e_row_num = parse_range(range_str)
         s_col_num = self._column_letter_to_number(s_col_letter)
-        
+
         # If e_col_letter or e_row_num are missing (whole row/col), calculate them
         if not e_row_num:
             e_row_num = int(s_row_num) + rows_written - 1
@@ -1268,16 +1266,16 @@ class ExcelSessionManager:
                 engine = FilterEngine()
                 start_row = read_result.get("start_row", 1)
                 start_col = read_result.get("start_col", 1)
-                
+
                 # Apply filter returns {data, rows_filtered, rows_removed, columns, filter_applied, cell_locations}
                 filter_result = engine.apply_filter(
-                    data, filters, headers if has_header else None, 
+                    data, filters, headers if has_header else None,
                     start_row=start_row, start_col=start_col
                 )
 
                 filtered_data = filter_result["data"]
                 match_count = filter_result["rows_filtered"]
-                
+
                 # In all_sheets mode, only include sheets that have actual matches
                 if match_count > 0 or not all_sheets:
                     # Formatted result for this sheet
@@ -2791,7 +2789,7 @@ class ExcelSessionManager:
 
         values = rng.Value
         from collections import Counter
-        
+
         counts = Counter()
         if values is not None:
             # Flatten values

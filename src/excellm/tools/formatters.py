@@ -4,16 +4,14 @@ Contains tools for applying and retrieving cell/range formatting.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 from ..core.connection import (
+    _init_com,
     get_excel_app,
     get_workbook,
     get_worksheet,
-    _init_com,
 )
-from ..core.errors import ToolError, ErrorCodes
-from ..core.utils import normalize_address
 
 logger = logging.getLogger(__name__)
 
@@ -57,23 +55,23 @@ STYLES = {
 
 def _apply_format(rng, format_props: Dict[str, Any]) -> None:
     """Apply formatting properties to a range."""
-    
+
     # Font properties
     if format_props.get("font_bold") is not None:
         rng.Font.Bold = format_props["font_bold"]
-    
+
     if format_props.get("font_italic") is not None:
         rng.Font.Italic = format_props["font_italic"]
-    
+
     if format_props.get("font_underline") is not None:
         rng.Font.Underline = 2 if format_props["font_underline"] else -4142  # xlUnderlineStyleSingle or xlNone
-    
+
     if format_props.get("font_strikethrough") is not None:
         rng.Font.Strikethrough = format_props["font_strikethrough"]
-    
+
     if format_props.get("font_size") is not None:
         rng.Font.Size = format_props["font_size"]
-    
+
     if format_props.get("font_color"):
         # Convert hex RGB to Excel color
         hex_color = format_props["font_color"].lstrip("#")
@@ -81,10 +79,10 @@ def _apply_format(rng, format_props: Dict[str, Any]) -> None:
         g = int(hex_color[2:4], 16)
         b = int(hex_color[4:6], 16)
         rng.Font.Color = r + (g * 256) + (b * 65536)
-    
+
     if format_props.get("font_name"):
         rng.Font.Name = format_props["font_name"]
-    
+
     # Fill color
     if format_props.get("fill_color"):
         hex_color = format_props["fill_color"].lstrip("#")
@@ -92,7 +90,7 @@ def _apply_format(rng, format_props: Dict[str, Any]) -> None:
         g = int(hex_color[2:4], 16)
         b = int(hex_color[4:6], 16)
         rng.Interior.Color = r + (g * 256) + (b * 65536)
-    
+
     # Alignment
     if format_props.get("horizontal"):
         h_align = format_props["horizontal"].lower()
@@ -102,7 +100,7 @@ def _apply_format(rng, format_props: Dict[str, Any]) -> None:
             rng.HorizontalAlignment = -4108  # xlCenter
         elif h_align == "right":
             rng.HorizontalAlignment = -4152  # xlRight
-    
+
     if format_props.get("vertical"):
         v_align = format_props["vertical"].lower()
         if v_align == "top":
@@ -111,14 +109,14 @@ def _apply_format(rng, format_props: Dict[str, Any]) -> None:
             rng.VerticalAlignment = -4108  # xlCenter
         elif v_align == "bottom":
             rng.VerticalAlignment = -4107  # xlBottom
-    
+
     if format_props.get("wrap_text") is not None:
         rng.WrapText = format_props["wrap_text"]
-    
+
     # Number format
     if format_props.get("number_format"):
         rng.NumberFormat = format_props["number_format"]
-    
+
     # Border
     if format_props.get("border"):
         # xlEdgeLeft=7, xlEdgeTop=8, xlEdgeBottom=9, xlEdgeRight=10
@@ -136,26 +134,26 @@ def _apply_format(rng, format_props: Dict[str, Any]) -> None:
                     rng.Borders(edge).Color = r + (g * 256) + (b * 65536)
             except Exception:
                 pass
-    
+
     # Column width
     if format_props.get("column_width") is not None:
         rng.ColumnWidth = format_props["column_width"]
-    
+
     # Row height
     if format_props.get("row_height") is not None:
         rng.RowHeight = format_props["row_height"]
-    
+
     # AutoFit
     if format_props.get("autofit") or format_props.get("autofit_columns"):
         rng.Columns.AutoFit()
-    
+
     if format_props.get("autofit") or format_props.get("autofit_rows"):
         rng.Rows.AutoFit()
-    
+
     # Merge/Unmerge
     if format_props.get("merge"):
         rng.Merge()
-    
+
     if format_props.get("unmerge"):
         rng.UnMerge()
 
@@ -170,12 +168,12 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
     - cellIs: Cell comparison rules (greater than, less than, etc.)
     """
     format_type = cond_format.get("type", "").lower()
-    
+
     if format_type == "colorscale":
         # Color scale - gradient from min to max
         # Type 2 = xlColorScale
         cf = rng.FormatConditions.AddColorScale(ColorScaleType=2)
-        
+
         # Set min color (default: red)
         min_color = cond_format.get("min_color", "F8696B")  # Light red
         if min_color:
@@ -184,7 +182,7 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
             g = int(hex_color[2:4], 16)
             b = int(hex_color[4:6], 16)
             cf.ColorScaleCriteria(1).FormatColor.Color = r + (g * 256) + (b * 65536)
-        
+
         # Set max color (default: green)
         max_color = cond_format.get("max_color", "63BE7B")  # Light green
         if max_color:
@@ -193,11 +191,11 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
             g = int(hex_color[2:4], 16)
             b = int(hex_color[4:6], 16)
             cf.ColorScaleCriteria(2).FormatColor.Color = r + (g * 256) + (b * 65536)
-            
+
     elif format_type == "databar":
         # Data bars - horizontal bars proportional to value
         cf = rng.FormatConditions.AddDatabar()
-        
+
         # Set bar color (default: blue)
         bar_color = cond_format.get("bar_color", "638EC6")  # Light blue
         if bar_color:
@@ -206,11 +204,11 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
             g = int(hex_color[2:4], 16)
             b = int(hex_color[4:6], 16)
             cf.BarColor.Color = r + (g * 256) + (b * 65536)
-        
+
         # Show/hide values
         if cond_format.get("show_value") is False:
             cf.ShowValue = False
-            
+
     elif format_type == "iconset":
         # Icon sets - traffic lights, arrows, etc.
         # IconSetType values: 1=3Arrows, 2=3ArrowsGray, 3=3Flags, 4=3TrafficLights, etc.
@@ -228,17 +226,17 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
             "5arrowsgray": 14,
             "5quarters": 16,
         }
-        
+
         icon_style = cond_format.get("icon_style", "3trafficlights").lower()
         icon_type = icon_styles.get(icon_style, 4)  # Default to traffic lights
-        
+
         cf = rng.FormatConditions.AddIconSetCondition()
         cf.IconSet = rng.Application.ActiveWorkbook.IconSets(icon_type)
-        
+
         # Reverse icons if requested
         if cond_format.get("reverse", False):
             cf.ReverseOrder = True
-            
+
     elif format_type == "cellis":
         # Cell comparison rules
         # Operator values: 1=Between, 3=Equal, 5=GreaterThan, 6=LessThan, 7=GreaterEqual, 8=LessEqual
@@ -252,18 +250,18 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
             "greaterequal": 7,
             "lessequal": 8,
         }
-        
+
         operator = cond_format.get("operator", "greaterthan").lower().replace("_", "")
         op_value = operators.get(operator, 5)
-        
+
         value1 = cond_format.get("value", cond_format.get("value1", 0))
         value2 = cond_format.get("value2")  # For between
-        
+
         if value2 is not None:
             cf = rng.FormatConditions.Add(Type=1, Operator=op_value, Formula1=str(value1), Formula2=str(value2))
         else:
             cf = rng.FormatConditions.Add(Type=1, Operator=op_value, Formula1=str(value1))
-        
+
         # Apply formatting for matching cells
         fill_color = cond_format.get("fill_color", "FFEB9C")  # Light yellow
         if fill_color:
@@ -272,7 +270,7 @@ def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
             g = int(hex_color[2:4], 16)
             b = int(hex_color[4:6], 16)
             cf.Interior.Color = r + (g * 256) + (b * 65536)
-        
+
         font_color = cond_format.get("font_color")
         if font_color:
             hex_color = font_color.lstrip("#")
@@ -311,49 +309,49 @@ def format_range_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Parse comma-separated references
     references = [r.strip() for r in reference.split(",")]
-    
+
     results = []
     total_cells = 0
-    
+
     for ref in references:
         rng = worksheet.Range(ref)
-        
+
         # Build format properties
         format_props = {}
-        
+
         # Apply style first (base formatting)
         if style and style.lower() in STYLES:
             format_props.update(STYLES[style.lower()])
-        
+
         # Override with custom format
         if format:
             format_props.update(format)
-        
+
         if format_props:
             _apply_format(rng, format_props)
-        
+
         # Apply conditional formatting if specified
         if conditional_format:
             try:
                 _apply_conditional_format(rng, conditional_format)
             except Exception as cf_error:
                 logger.warning(f"Failed to apply conditional format: {cf_error}")
-        
+
         cells_count = rng.Cells.Count
         total_cells += cells_count
-        
+
         results.append({
             "reference": ref,
             "cells_formatted": cells_count,
         })
-    
+
     if activate:
         try:
             workbook.Activate()
@@ -361,7 +359,7 @@ def format_range_sync(
             worksheet.Range(references[0]).Select()
         except Exception:
             pass
-    
+
     if len(references) == 1:
         return {
             "success": True,
@@ -396,20 +394,20 @@ def get_format_sync(
         Dictionary with formatting properties
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Parse comma-separated references
     references = [r.strip() for r in reference.split(",")]
-    
+
     if len(references) > 1:
         results = []
         for ref in references:
             result = _get_single_format(worksheet, ref)
             results.append(result)
-        
+
         return {
             "success": True,
             "workbook": workbook_name,
@@ -430,7 +428,7 @@ def get_format_sync(
 def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
     """Get formatting for a single reference."""
     rng = worksheet.Range(reference)
-    
+
     # Font properties
     font = {}
     try:
@@ -440,7 +438,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
         font["strikethrough"] = bool(rng.Font.Strikethrough)
         font["size"] = rng.Font.Size
         font["name"] = rng.Font.Name
-        
+
         # Font color
         color = rng.Font.Color
         if color:
@@ -450,7 +448,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
             font["color"] = f"{r:02X}{g:02X}{b:02X}"
     except Exception:
         pass
-    
+
     # Fill
     fill = {}
     try:
@@ -462,7 +460,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
             fill["color"] = f"{r:02X}{g:02X}{b:02X}"
     except Exception:
         pass
-    
+
     # Alignment
     alignment = {}
     try:
@@ -473,7 +471,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
             alignment["horizontal"] = "center"
         elif h_align == -4152:
             alignment["horizontal"] = "right"
-        
+
         v_align = rng.VerticalAlignment
         if v_align == -4160:
             alignment["vertical"] = "top"
@@ -483,7 +481,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
             alignment["vertical"] = "bottom"
     except Exception:
         pass
-    
+
     # Other properties
     wrap_text = None
     number_format = None
@@ -492,7 +490,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
         number_format = rng.NumberFormat
     except Exception:
         pass
-    
+
     # Borders
     borders = {"has_borders": False}
     try:
@@ -503,7 +501,7 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
                 break
     except Exception:
         pass
-    
+
     result = {
         "reference": reference,
         "font": font,
@@ -513,13 +511,13 @@ def _get_single_format(worksheet, reference: str) -> Dict[str, Any]:
         "number_format": number_format,
         "borders": borders,
     }
-    
+
     if ":" in reference:
         result["range"] = reference
         result["cell_count"] = rng.Cells.Count
     else:
         result["cell"] = reference
-    
+
     return result
 
 
@@ -541,29 +539,29 @@ def merge_cells_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     try:
         app = get_excel_app()
         workbook = get_workbook(app, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         range_ref = f"{start_cell}:{end_cell}"
         rng = worksheet.Range(range_ref)
-        
+
         # Get the value of the first cell (will be preserved after merge)
         first_value = rng.Cells(1, 1).Value
-        
+
         rng.Merge()
-        
+
         logger.info(f"Merged cells {range_ref} in {sheet_name}")
-        
+
         return {
             "success": True,
             "message": f"Cells {range_ref} merged successfully",
             "range": range_ref,
             "preserved_value": first_value,
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to merge cells: {e}")
         return {
@@ -590,25 +588,25 @@ def unmerge_cells_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     try:
         app = get_excel_app()
         workbook = get_workbook(app, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         range_ref = f"{start_cell}:{end_cell}"
         rng = worksheet.Range(range_ref)
-        
+
         rng.UnMerge()
-        
+
         logger.info(f"Unmerged cells {range_ref} in {sheet_name}")
-        
+
         return {
             "success": True,
             "message": f"Cells {range_ref} unmerged successfully",
             "range": range_ref,
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to unmerge cells: {e}")
         return {
@@ -631,26 +629,26 @@ def get_merged_cells_sync(
         Dictionary with list of merged ranges
     """
     _init_com()
-    
+
     try:
         app = get_excel_app()
         workbook = get_workbook(app, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         merged_ranges = []
-        
+
         # Get UsedRange to scan for merged cells
         used_range = worksheet.UsedRange
-        
+
         # Track processed merge areas to avoid duplicates
         processed = set()
-        
+
         for cell in used_range:
             try:
                 if cell.MergeCells:
                     merge_area = cell.MergeArea
                     address = merge_area.Address
-                    
+
                     if address not in processed:
                         processed.add(address)
                         merged_ranges.append({
@@ -661,13 +659,13 @@ def get_merged_cells_sync(
                         })
             except Exception:
                 continue
-        
+
         return {
             "success": True,
             "merged_ranges": merged_ranges,
             "count": len(merged_ranges),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to get merged cells: {e}")
         return {

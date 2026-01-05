@@ -1,8 +1,8 @@
 """Input validation utilities for Excel operations."""
 
-import re
 import logging
-from typing import Any, List, Tuple, Union, Optional
+import re
+from typing import Any, List, Tuple
 
 
 class ToolError(Exception):
@@ -103,10 +103,10 @@ def validate_range_format(range_str: str) -> bool:
     column_pattern = r"^[A-Za-z]{1,3}:[A-Za-z]{1,3}$"
     # Whole rows 1:5
     row_pattern = r"^[0-9]{1,7}:[0-9]{1,7}$"
-    
+
     return bool(re.match(single_cell_pattern, range_str) or
-                re.match(standard_pattern, range_str) or 
-                re.match(column_pattern, range_str) or 
+                re.match(standard_pattern, range_str) or
+                re.match(column_pattern, range_str) or
                 re.match(row_pattern, range_str))
 
 
@@ -647,17 +647,17 @@ def validate_cell_reference(cell: str) -> bool:
     """
     if not cell or not isinstance(cell, str):
         return False
-    
+
     # Remove sheet reference if present
     if "!" in cell:
         parts = cell.split("!")
         if len(parts) != 2:
             return False
         cell = parts[1]
-    
+
     # Remove $ signs (absolute reference markers)
     cell = cell.replace("$", "")
-    
+
     # Match pattern: 1-3 letters followed by 1-7 digits
     pattern = r"^[A-Za-z]{1,3}[0-9]{1,7}$"
     return bool(re.match(pattern, cell))
@@ -701,14 +701,14 @@ def validate_formula_sync(formula: str) -> dict:
         "warnings": [],
         "functions_used": [],
     }
-    
+
     if not formula or not isinstance(formula, str):
         result["valid"] = False
         result["error"] = "Formula must be a non-empty string"
         return result
-    
+
     formula = formula.strip()
-    
+
     # Check if formula starts with =
     if not formula.startswith("="):
         # Suggest correction
@@ -716,20 +716,20 @@ def validate_formula_sync(formula: str) -> dict:
         result["error"] = "Formula must start with '='"
         result["suggestion"] = f"Did you mean: ={formula}?"
         return result
-    
+
     # Remove the leading =
     formula_body = formula[1:]
-    
+
     if not formula_body:
         result["valid"] = False
         result["error"] = "Formula body is empty after '='"
         return result
-    
+
     # Check for balanced parentheses
     paren_count = 0
     in_string = False
     string_char = None
-    
+
     for i, char in enumerate(formula_body):
         # Track string literals
         if char in ('"', "'") and (i == 0 or formula_body[i-1] != "\\"):
@@ -740,42 +740,42 @@ def validate_formula_sync(formula: str) -> dict:
                 in_string = False
                 string_char = None
             continue
-        
+
         if not in_string:
             if char == "(":
                 paren_count += 1
             elif char == ")":
                 paren_count -= 1
-                
+
             if paren_count < 0:
                 result["valid"] = False
                 result["error"] = f"Unbalanced parentheses: extra ')' at position {i + 2}"
                 return result
-    
+
     if paren_count != 0:
         result["valid"] = False
         result["error"] = f"Unbalanced parentheses: {abs(paren_count)} unclosed '('"
         return result
-    
+
     # Check for unclosed string
     if in_string:
         result["valid"] = False
         result["error"] = "Unclosed string literal"
         return result
-    
+
     # Extract and validate function names
     function_pattern = r'\b([A-Z][A-Z0-9_]*)\s*\('
     functions = re.findall(function_pattern, formula_body.upper())
-    
+
     for func in functions:
         if func not in VALID_EXCEL_FUNCTIONS:
             # Check if it might be a named range or just unknown
             # Named ranges usually don't have '(' immediately after, but in some contexts they might
             # Simple heuristic: if it looks like a function call but isn't known
-            
+
             # Check against range pattern (A1, AA123) to avoid false positives for multiplication e.g. AB(
             is_range_like = re.match(r'^[A-Z]{1,3}[0-9]+$', func)
-            
+
             if not is_range_like:
                 result["warnings"].append({
                     "type": "unknown_function",
@@ -786,17 +786,17 @@ def validate_formula_sync(formula: str) -> dict:
         else:
             if func not in result["functions_used"]:
                 result["functions_used"].append(func)
-    
+
     # Range Validation (Advanced)
     # Check for whole column references in potential array contexts
     # Pattern: A:A or A:C
     whole_col_pattern = r'\b[A-Za-z]{1,3}:[A-Za-z]{1,3}\b'
     whole_cols = re.findall(whole_col_pattern, formula_body)
-    
+
     # Functions that are dangerous with whole columns (slow calculation)
     dangerous_funcs_with_whole_cols = {"SUMPRODUCT", "FILTER", "SORT", "UNIQUE"}
     used_dangerous_func = any(f in result["functions_used"] for f in dangerous_funcs_with_whole_cols)
-    
+
     if whole_cols and used_dangerous_func:
         result["warnings"].append({
             "type": "performance_risk",
@@ -810,21 +810,21 @@ def validate_formula_sync(formula: str) -> dict:
             "severity": "low",
             "message": f"Note: Whole column reference {whole_cols[0]} used. Ensure this is intentional.",
         })
-        
-        
+
+
     # Check for common syntax errors
     # Double operators
     if re.search(r'[+\-*/^]{2,}', formula_body):
         result["valid"] = False
         result["error"] = "Invalid: consecutive operators"
         return result
-    
+
     # Operator at end (except for ranges)
     if re.search(r'[+\-*/^=<>]$', formula_body) and not formula_body.endswith(":"):
         result["valid"] = False
         result["error"] = "Formula cannot end with an operator"
         return result
-    
+
     # Empty parentheses
     if "()" in formula_body:
         # Check if it's a valid no-argument function
@@ -836,7 +836,7 @@ def validate_formula_sync(formula: str) -> dict:
                 "severity": "low",
                 "message": f"Empty parentheses in {match.group(1)}(). Verify if arguments are required.",
             })
-    
+
     return result
 
 

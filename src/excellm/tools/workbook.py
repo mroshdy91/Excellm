@@ -7,12 +7,11 @@ import logging
 from typing import Any, Dict, List
 
 from ..core.connection import (
+    _init_com,
     get_excel_app,
     get_workbook,
     get_worksheet,
-    _init_com,
 )
-from ..core.errors import ToolError, ErrorCodes
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +23,21 @@ def list_workbooks_sync() -> List[Dict[str, Any]]:
         List of dictionaries containing workbook name and sheets
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbooks = []
-    
+
     try:
         wb_count = app.Workbooks.Count
     except Exception:
         logger.warning("No open workbooks found")
         return workbooks
-    
+
     for i in range(1, wb_count + 1):
         try:
             workbook = app.Workbooks(i)
             sheets = []
-            
+
             for j in range(1, workbook.Worksheets.Count + 1):
                 worksheet = workbook.Worksheets(j)
                 sheet_name = worksheet.Name
@@ -48,7 +47,7 @@ def list_workbooks_sync() -> List[Dict[str, Any]]:
                     "name": sheet_name,
                     "hidden": is_hidden
                 })
-            
+
             workbooks.append({
                 "name": workbook.Name,
                 "sheets": sheets
@@ -65,7 +64,7 @@ def list_workbooks_sync() -> List[Dict[str, Any]]:
                     "name": "Unknown",
                     "sheets": []
                 })
-    
+
     return workbooks
 
 
@@ -87,24 +86,24 @@ def select_range_sync(
         Dictionary with success status and message
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Activate workbook window
     try:
         workbook.Activate()
     except Exception:
         pass  # Ignore if fails
-    
+
     # Activate worksheet
     worksheet.Activate()
-    
+
     # Select target range
     rng = worksheet.Range(reference)
     rng.Select()
-    
+
     return {
         "success": True,
         "workbook": workbook_name,
@@ -124,14 +123,14 @@ def get_sheet_names_sync(workbook_name: str) -> List[str]:
         List of sheet names
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     sheets = []
-    
+
     for i in range(1, workbook.Worksheets.Count + 1):
         sheets.append(workbook.Worksheets(i).Name)
-    
+
     return sheets
 
 
@@ -145,10 +144,10 @@ def validate_cell_reference_result(cell: str) -> Dict[str, Any]:
         Dictionary with validation result
     """
     import re
-    
+
     # Pattern for valid cell references: 1-3 letters + 1-7 digits
     pattern = r'^[A-Za-z]{1,3}[1-9][0-9]{0,6}$'
-    
+
     if re.match(pattern, cell):
         return {
             "valid": True,

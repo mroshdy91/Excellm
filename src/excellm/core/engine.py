@@ -6,26 +6,26 @@ implemented by different backends:
 - FileEngine: Cross-platform file-based (openpyxl)
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, List, Dict, Optional, Tuple
 import platform
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List
 
 
 class ExcelEngine(ABC):
     """Abstract base class for Excel operation engines."""
-    
+
     @property
     @abstractmethod
     def engine_name(self) -> str:
         """Name of the engine (e.g., 'COM', 'File')."""
         pass
-    
+
     @property
     @abstractmethod
     def supports_live_excel(self) -> bool:
         """Whether this engine supports live Excel operations."""
         pass
-    
+
     @abstractmethod
     def list_workbooks(self) -> List[Dict[str, Any]]:
         """List all available workbooks.
@@ -34,7 +34,7 @@ class ExcelEngine(ABC):
             List of workbook info dictionaries
         """
         pass
-    
+
     @abstractmethod
     def read_range(
         self,
@@ -53,7 +53,7 @@ class ExcelEngine(ABC):
             2D list of cell values
         """
         pass
-    
+
     @abstractmethod
     def write_range(
         self,
@@ -74,7 +74,7 @@ class ExcelEngine(ABC):
             Dictionary with operation result
         """
         pass
-    
+
     @abstractmethod
     def get_sheet_names(self, workbook_path: str) -> List[str]:
         """Get all sheet names in a workbook.
@@ -86,7 +86,7 @@ class ExcelEngine(ABC):
             List of sheet names
         """
         pass
-    
+
     @abstractmethod
     def create_sheet(
         self,
@@ -103,7 +103,7 @@ class ExcelEngine(ABC):
             Dictionary with operation result
         """
         pass
-    
+
     @abstractmethod
     def delete_sheet(
         self,
@@ -120,9 +120,9 @@ class ExcelEngine(ABC):
             Dictionary with operation result
         """
         pass
-    
+
     # Optional advanced features (may not be supported by all engines)
-    
+
     def execute_vba(
         self,
         workbook_path: str,
@@ -135,7 +135,7 @@ class ExcelEngine(ABC):
             NotImplementedError: If engine doesn't support VBA
         """
         raise NotImplementedError(f"{self.engine_name} engine does not support VBA execution")
-    
+
     def capture_sheet(
         self,
         workbook_path: str,
@@ -159,7 +159,7 @@ def is_excel_running() -> bool:
     """Check if Excel is running on Windows."""
     if not is_windows():
         return False
-    
+
     try:
         import win32com.client
         excel = win32com.client.GetActiveObject("Excel.Application")
@@ -172,7 +172,7 @@ def is_excel_running() -> bool:
 
 class EngineFactory:
     """Factory for creating appropriate Excel engine based on context."""
-    
+
     @staticmethod
     def create_engine(
         prefer_live: bool = True,
@@ -189,7 +189,7 @@ class EngineFactory:
         """
         # If workbook_path looks like a full path (not just a name), prefer file mode
         is_full_path = workbook_path and ('/' in workbook_path or '\\' in workbook_path)
-        
+
         if prefer_live and not is_full_path and is_windows() and is_excel_running():
             # Use COM engine for live Excel
             from .com_engine import COMEngine
@@ -198,7 +198,7 @@ class EngineFactory:
             # Use file-based engine
             from .file_engine import FileEngine
             return FileEngine()
-    
+
     @staticmethod
     def get_default_engine() -> ExcelEngine:
         """Get the default engine for the current environment."""

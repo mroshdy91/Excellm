@@ -81,24 +81,24 @@ def parse_range_bounds(range_str: str) -> Tuple[int, int, int, int]:
     """
     # Normalize first
     range_str = normalize_address(range_str)
-    
+
     # Match A1:B2 or just A1
     pattern = r"([A-Za-z]+)(\d+)(?::([A-Za-z]+)(\d+))?"
     match = re.match(pattern, range_str)
-    
+
     if not match:
         return (1, 1, 1, 1)
-    
+
     start_col = column_to_number(match.group(1))
     start_row = int(match.group(2))
-    
+
     if match.group(3) and match.group(4):
         end_col = column_to_number(match.group(3))
         end_row = int(match.group(4))
     else:
         end_col = start_col
         end_row = start_row
-    
+
     return (start_row, start_col, end_row, end_col)
 
 
@@ -115,7 +115,7 @@ def build_range_address(
     """
     start = f"{number_to_column(start_col)}{start_row}"
     end = f"{number_to_column(end_col)}{end_row}"
-    
+
     if start == end:
         return start
     return f"{start}:{end}"
@@ -216,7 +216,7 @@ def get_cell_type(value: Any) -> str:
 # Sheet name heuristics for scoring
 PRIORITY_SHEET_PATTERNS = [
     r"^data$",
-    r"^input$", 
+    r"^input$",
     r"^main$",
     r"^sheet1$",
     r"^summary$",
@@ -237,12 +237,12 @@ def sheet_name_priority_boost(name: str) -> float:
         Boost value 0..0.2
     """
     name_lower = name.lower().strip()
-    
+
     for i, pattern in enumerate(PRIORITY_SHEET_PATTERNS):
         if re.search(pattern, name_lower):
             # Earlier patterns get higher boost
             return 0.2 - (i * 0.02)
-    
+
     return 0.0
 
 
@@ -263,49 +263,49 @@ def generate_sample_positions(
         List of (row, col) positions to probe
     """
     positions = []
-    
+
     total_rows = end_row - start_row + 1
     total_cols = end_col - start_col + 1
-    
+
     # Compute tile sizes
     tile_rows = max(1, total_rows // max_tiles)
     tile_cols = max(1, total_cols // max_tiles)
-    
+
     # Number of tiles
     num_row_tiles = min(max_tiles, total_rows)
     num_col_tiles = min(max_tiles, total_cols)
-    
+
     for i in range(num_row_tiles):
         for j in range(num_col_tiles):
             tile_start_row = start_row + i * tile_rows
             tile_start_col = start_col + j * tile_cols
-            
+
             # Sample center of tile
             center_row = tile_start_row + tile_rows // 2
             center_col = tile_start_col + tile_cols // 2
-            
+
             # Clamp to range
             center_row = min(center_row, end_row)
             center_col = min(center_col, end_col)
-            
+
             positions.append((center_row, center_col))
-            
+
             # Add corners if space allows and probes_per_tile > 1
             if probes_per_tile > 1 and tile_rows > 1 and tile_cols > 1:
                 # Top-left of tile
                 positions.append((tile_start_row, tile_start_col))
-                
+
             if probes_per_tile > 2:
                 # Bottom-right of tile
                 br_row = min(tile_start_row + tile_rows - 1, end_row)
                 br_col = min(tile_start_col + tile_cols - 1, end_col)
                 positions.append((br_row, br_col))
-    
+
     # Cap total probes
     max_probes = 300
     if len(positions) > max_probes:
         # Take evenly distributed sample
         step = len(positions) // max_probes
         positions = positions[::step][:max_probes]
-    
+
     return positions

@@ -7,20 +7,20 @@ workbooks and worksheets via COM automation:
 - explore: Sheet-level radar with quick/deep modes
 """
 
-from .types import (
-    InspectWorkbookResult,
-    SheetIndex,
-    ExploreResult,
-    Region,
-    Outlier,
-    TOOL_VERSION,
-)
-from .inspect_workbook import inspect_workbook_sync
 from .explore import explore_sync
+from .inspect_workbook import inspect_workbook_sync
+from .types import (
+    TOOL_VERSION,
+    ExploreResult,
+    InspectWorkbookResult,
+    Outlier,
+    Region,
+    SheetIndex,
+)
 
 __all__ = [
     "InspectWorkbookResult",
-    "SheetIndex", 
+    "SheetIndex",
     "ExploreResult",
     "Region",
     "Outlier",

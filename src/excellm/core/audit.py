@@ -4,8 +4,6 @@ Provides simple logging of write operations for debugging and accountability.
 """
 
 import logging
-from datetime import datetime
-from typing import Optional
 
 # Create dedicated audit logger
 _audit_logger = logging.getLogger("excellm.audit")

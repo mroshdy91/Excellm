@@ -8,70 +8,62 @@ Refactored version with modular tool organization.
 
 import asyncio
 import logging
-from typing import Any, List, Optional, Dict
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
 # Import from refactored modules
-from .core.errors import ToolError, ErrorCodes
-from .tools import (
-    # Readers
-    read_cell_sync,
-    read_range_sync,
-    batch_read_sync,
-    get_unique_values_sync,
-    get_current_selection_sync,
-    # Writers
-    write_cell_sync,
-    write_range_sync,
-    # Formatters
-    format_range_sync,
-    get_format_sync,
-    merge_cells_sync,
-    unmerge_cells_sync,
-    get_merged_cells_sync,
-    # Sheet Management
-    manage_sheet_sync,
-    insert_sync,
-    delete_sync,
-    # Range Operations (NEW)
-    copy_range_sync,
-    sort_range_sync,
-    find_replace_sync,
-    # Workbook
-    list_workbooks_sync,
-    select_range_sync,
-    validate_cell_reference_result,
-    # Search
-    search_sync,
-    # Session (NEW - stateful processing)
-    create_transform_session_sync,
-    create_parallel_sessions_sync,
-    process_chunk_sync,
-    get_session_status_sync,
-    # VBA Execution (NEW)
-    execute_vba_sync,
-    # Screen Capture (NEW)
-    capture_sheet_sync,
-    # Table Operations (NEW)
-    create_table_sync,
-    list_tables_sync,
-    delete_table_sync,
-    # Chart Operations (NEW)
-    create_chart_sync,
-    list_charts_sync,
-    delete_chart_sync,
-    # Pivot Table Operations (NEW)
-    create_pivot_table_sync,
-    refresh_pivot_table_sync,
-    list_pivot_tables_sync,
-    delete_pivot_table_sync,
-)
-from .tools.history import get_recent_changes_sync
-from .inspection import inspect_workbook_sync, explore_sync
+from .core.errors import ErrorCodes, ToolError
 
 # For backward compatibility - keep ExcelSessionManager for tools that still need it
 from .excel_session import ExcelSessionManager
+from .inspection import explore_sync, inspect_workbook_sync
+from .tools import (
+    batch_read_sync,
+    # Screen Capture (NEW)
+    capture_sheet_sync,
+    # Range Operations (NEW)
+    copy_range_sync,
+    # Chart Operations (NEW)
+    create_chart_sync,
+    create_parallel_sessions_sync,
+    # Pivot Table Operations (NEW)
+    create_pivot_table_sync,
+    # Table Operations (NEW)
+    create_table_sync,
+    # Session (NEW - stateful processing)
+    create_transform_session_sync,
+    delete_sync,
+    delete_table_sync,
+    # VBA Execution (NEW)
+    execute_vba_sync,
+    find_replace_sync,
+    # Formatters
+    format_range_sync,
+    get_current_selection_sync,
+    get_format_sync,
+    get_merged_cells_sync,
+    get_session_status_sync,
+    get_unique_values_sync,
+    insert_sync,
+    list_tables_sync,
+    # Workbook
+    list_workbooks_sync,
+    # Sheet Management
+    manage_sheet_sync,
+    merge_cells_sync,
+    process_chunk_sync,
+    # Readers
+    read_range_sync,
+    search_sync,
+    select_range_sync,
+    sort_range_sync,
+    unmerge_cells_sync,
+    validate_cell_reference_result,
+    # Writers
+    write_range_sync,
+)
+from .tools.history import get_recent_changes_sync
 
 # Configure logging (write to stderr, not stdout!)
 logging.basicConfig(
@@ -231,7 +223,7 @@ async def read(
     try:
         if batch:
             return await asyncio.to_thread(batch_read_sync, workbook_name, batch)
-        
+
         if not sheet_name:
             raise ToolError("sheet_name is required when batch is not used")
 
@@ -729,7 +721,7 @@ async def get_recent_changes(limit: int = 10) -> Dict[str, Any]:
     try:
         # Run syncing logic in thread pool to avoid blocking async loop
         result = await asyncio.to_thread(get_recent_changes_sync, limit)
-        
+
         return {
             "success": True,
             "undo_history": result["undo"],
@@ -1018,7 +1010,7 @@ async def execute_vba(
             "To enable, set environment variable: EXCELLM_ENABLE_VBA=true",
             code=ErrorCodes.VBA_DISABLED
         )
-    
+
     try:
         result = await asyncio.to_thread(
             execute_vba_sync,

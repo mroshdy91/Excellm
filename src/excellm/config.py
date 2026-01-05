@@ -5,13 +5,12 @@ Centralized environment-based configuration to control features and security.
 
 import os
 
-
 # =============================================================================
 # SECURITY SETTINGS
 # =============================================================================
 
 # VBA Execution: DISABLED by default for security
-# VBA code runs with full Excel/COM privileges and can modify files, 
+# VBA code runs with full Excel/COM privileges and can modify files,
 # access system resources, and execute arbitrary code.
 # Set EXCELLM_ENABLE_VBA=true in environment to enable.
 VBA_ENABLED = os.getenv("EXCELLM_ENABLE_VBA", "").lower() in ("true", "1", "yes")

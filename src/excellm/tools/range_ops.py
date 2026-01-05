@@ -5,18 +5,16 @@ These are new tools added in the refactoring.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from ..core.connection import (
+    _init_com,
     get_excel_app,
     get_workbook,
     get_worksheet,
-    _init_com,
 )
-from ..core.errors import ToolError, ErrorCodes
 from ..core.utils import (
     number_to_column,
-    column_to_number,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,38 +44,38 @@ def copy_range_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
-    
+
     # Get source
     src_workbook = get_workbook(app, source_workbook)
     src_worksheet = get_worksheet(src_workbook, source_sheet)
     src_range = src_worksheet.Range(source_range)
-    
+
     # Get target
     tgt_workbook_name = target_workbook or source_workbook
     tgt_sheet_name = target_sheet or source_sheet
-    
+
     tgt_workbook = get_workbook(app, tgt_workbook_name)
     tgt_worksheet = get_worksheet(tgt_workbook, tgt_sheet_name)
     tgt_range = tgt_worksheet.Range(target_cell)
-    
+
     # Copy data
     src_range.Copy()
-    
+
     if include_formatting:
         # Paste with all formatting
         tgt_range.PasteSpecial(Paste=-4104)  # xlPasteAll
     else:
         # Paste values only
         tgt_range.PasteSpecial(Paste=-4163)  # xlPasteValues
-    
+
     # Clear clipboard
     try:
         app.CutCopyMode = False
     except Exception:
         pass
-    
+
     # Calculate destination range
     src_rows = src_range.Rows.Count
     src_cols = src_range.Columns.Count
@@ -85,9 +83,9 @@ def copy_range_sync(
     tgt_start_col = tgt_range.Column
     tgt_end_row = tgt_start_row + src_rows - 1
     tgt_end_col = tgt_start_col + src_cols - 1
-    
+
     target_range_addr = f"{number_to_column(tgt_start_col)}{tgt_start_row}:{number_to_column(tgt_end_col)}{tgt_end_row}"
-    
+
     return {
         "success": True,
         "source": {
@@ -127,49 +125,49 @@ def sort_range_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     rng = worksheet.Range(range_str)
-    
+
     # Clear existing sort fields
     worksheet.Sort.SortFields.Clear()
-    
+
     # Add sort fields
     for sort_spec in sort_by:
         col = sort_spec.get("column", "A")
         order = sort_spec.get("order", "asc").lower()
-        
+
         # Convert column letter to range reference
         if col.isdigit():
             col = number_to_column(int(col))
-        
+
         # Get the column range within the sort range
         start_row = rng.Row
         end_row = rng.Row + rng.Rows.Count - 1
         key_range = worksheet.Range(f"{col}{start_row}:{col}{end_row}")
-        
+
         # Order: 1 = xlAscending, 2 = xlDescending
         sort_order = 1 if order == "asc" else 2
-        
+
         worksheet.Sort.SortFields.Add(
             Key=key_range,
             SortOn=0,  # xlSortOnValues
             Order=sort_order,
         )
-    
+
     # Apply sort
     # Header: 1 = xlYes, 2 = xlNo
     header = 1 if has_header else 2
-    
+
     worksheet.Sort.SetRange(rng)
     worksheet.Sort.Header = header
     worksheet.Sort.MatchCase = False
     worksheet.Sort.Orientation = 1  # xlTopToBottom
     worksheet.Sort.Apply()
-    
+
     return {
         "success": True,
         "workbook": workbook_name,
@@ -208,30 +206,30 @@ def find_replace_sync(
         Dictionary with operation result
     """
     _init_com()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
-    
+
     # LookAt: 1 = xlWhole, 2 = xlPart
     look_at = 1 if match_entire_cell else 2
-    
+
     results = []
     total_replacements = 0
-    
+
     if sheet_name:
         # Single sheet
         sheets = [get_worksheet(workbook, sheet_name)]
     else:
         # All sheets
         sheets = [workbook.Worksheets(i) for i in range(1, workbook.Worksheets.Count + 1)]
-    
+
     for ws in sheets:
         # Get search range
         if range_str:
             search_range = ws.Range(range_str)
         else:
             search_range = ws.UsedRange
-        
+
         # Count matches first
         matches = 0
         find_result = search_range.Find(
@@ -240,17 +238,17 @@ def find_replace_sync(
             LookAt=look_at,
             MatchCase=match_case,
         )
-        
+
         if find_result:
             first_address = find_result.Address
             matches = 1
-            
+
             while True:
                 find_result = search_range.FindNext(find_result)
                 if not find_result or find_result.Address == first_address:
                     break
                 matches += 1
-        
+
         # Perform replacement if not preview
         replaced = 0
         if not preview_only and matches > 0:
@@ -262,7 +260,7 @@ def find_replace_sync(
             )
             # Replace returns True/False, so we use the count we found
             replaced = matches if replaced else 0
-        
+
         if matches > 0:
             results.append({
                 "sheet": ws.Name,
@@ -270,9 +268,9 @@ def find_replace_sync(
                 "replacements_made": replaced if not preview_only else 0,
             })
             total_replacements += replaced if not preview_only else 0
-    
+
     total_matches = sum(r.get("matches_found", 0) for r in results)
-    
+
     return {
         "success": True,
         "workbook": workbook_name,

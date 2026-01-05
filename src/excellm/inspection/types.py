@@ -3,8 +3,8 @@
 Stable output schemas using Pydantic for deterministic, versionable contracts.
 """
 
-from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 # Tool version - increment on breaking schema changes
@@ -61,13 +61,13 @@ class SheetIndex(BaseModel):
     name: str
     state: SheetStateType
     protected: bool
-    
+
     usedRangeReported: str
     realDataBounds: Optional[str] = None
     dataCellCount: Optional[int] = None
     nonEmptyRows: Optional[int] = None
     nonEmptyCols: Optional[int] = None
-    
+
     layoutFlags: LayoutFlags
     flags: List[str] = Field(default_factory=list)
     score: SheetScore

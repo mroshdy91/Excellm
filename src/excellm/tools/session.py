@@ -13,17 +13,16 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from ..core.connection import (
+    _init_com,
     get_excel_app,
     get_workbook,
     get_worksheet,
-    _init_com,
 )
-from ..core.errors import ToolError, ErrorCodes
+from ..core.errors import ErrorCodes, ToolError
 from ..core.utils import (
     column_to_number,
-    number_to_column,
 )
-from .writers import write_range_sync, _verify_against_source
+from .writers import _verify_against_source, write_range_sync
 
 logger = logging.getLogger(__name__)
 
@@ -76,35 +75,35 @@ def create_transform_session_sync(
     """
     _init_com()
     _cleanup_expired_sessions()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Auto-detect end row if not provided
     if end_row is None:
         used_range = worksheet.UsedRange
         end_row = used_range.Row + used_range.Rows.Count - 1
-    
+
     total_rows = end_row - start_row + 1
-    
+
     # Parse output columns
     if ":" in output_columns:
         start_out_col, end_out_col = output_columns.split(":")
     else:
         start_out_col = output_columns
         end_out_col = output_columns
-    
+
     num_output_cols = column_to_number(end_out_col) - column_to_number(start_out_col) + 1
-    
+
     # Generate session ID
     session_id = str(uuid.uuid4())[:8]
-    
+
     # Read first chunk of source data
     first_chunk_end = min(start_row + chunk_size - 1, end_row)
     source_range = f"{source_column}{start_row}:{source_column}{first_chunk_end}"
     source_data = worksheet.Range(source_range).Value
-    
+
     # Normalize source data
     if source_data is None:
         first_chunk_source = []
@@ -115,7 +114,7 @@ def create_transform_session_sync(
         ]
     else:
         first_chunk_source = [source_data]
-    
+
     # Create session
     _sessions[session_id] = {
         "workbook_name": workbook_name,
@@ -135,9 +134,9 @@ def create_transform_session_sync(
         "last_activity": datetime.now(),
         "status": "active",
     }
-    
+
     logger.info(f"Created session {session_id} for {workbook_name}:{sheet_name} ({total_rows} rows)")
-    
+
     return {
         "success": True,
         "session_id": session_id,
@@ -195,22 +194,22 @@ def create_parallel_sessions_sync(
     """
     _init_com()
     _cleanup_expired_sessions()
-    
+
     app = get_excel_app()
     workbook = get_workbook(app, workbook_name)
     worksheet = get_worksheet(workbook, sheet_name)
-    
+
     # Auto-detect end row if not provided
     if end_row is None:
         used_range = worksheet.UsedRange
         end_row = used_range.Row + used_range.Rows.Count - 1
-    
+
     total_rows = end_row - start_row + 1
     total_chunks = (total_rows + chunk_size - 1) // chunk_size  # Ceiling division
-    
+
     # Ensure we don't have more sessions than chunks
     num_sessions = min(num_sessions, total_chunks)
-    
+
     # Parse output columns for num_output_cols
     if ":" in output_columns:
         start_out_col, end_out_col = output_columns.split(":")
@@ -218,9 +217,9 @@ def create_parallel_sessions_sync(
         start_out_col = output_columns
         end_out_col = output_columns
     num_output_cols = column_to_number(end_out_col) - column_to_number(start_out_col) + 1
-    
+
     sessions = []
-    
+
     # Create sessions with interleaved chunk assignment
     # Session 0 gets chunks 0, num_sessions, 2*num_sessions, ...
     # Session 1 gets chunks 1, num_sessions+1, 2*num_sessions+1, ...
@@ -233,17 +232,17 @@ def create_parallel_sessions_sync(
             chunk_end = min(chunk_start + chunk_size - 1, end_row)
             session_chunks.append((chunk_start, chunk_end))
             chunk_idx += num_sessions
-        
+
         if not session_chunks:
             continue
-        
+
         # First chunk for this session
         first_chunk_start, first_chunk_end = session_chunks[0]
-        
+
         # Read first chunk source data
         source_range = f"{source_column}{first_chunk_start}:{source_column}{first_chunk_end}"
         source_data = worksheet.Range(source_range).Value
-        
+
         # Normalize source data
         if source_data is None:
             first_chunk_source = []
@@ -254,13 +253,13 @@ def create_parallel_sessions_sync(
             ]
         else:
             first_chunk_source = [source_data]
-        
+
         # Generate session ID
         session_id = str(uuid.uuid4())[:8]
-        
+
         # Calculate total rows for this session
         session_total_rows = sum(ce - cs + 1 for cs, ce in session_chunks)
-        
+
         # Store session with chunk list
         _sessions[session_id] = {
             "workbook_name": workbook_name,
@@ -279,9 +278,9 @@ def create_parallel_sessions_sync(
             "last_activity": datetime.now(),
             "status": "active",
         }
-        
+
         logger.info(f"Created parallel session {session_id} with {len(session_chunks)} chunks")
-        
+
         sessions.append({
             "session_id": session_id,
             "chunks": session_chunks,
@@ -293,7 +292,7 @@ def create_parallel_sessions_sync(
                 "rows": len(first_chunk_source),
             },
         })
-    
+
     return {
         "success": True,
         "workbook": workbook_name,
@@ -325,22 +324,22 @@ def process_chunk_sync(
         Dictionary with rows_written, verification, remaining, next_chunk_data
     """
     _init_com()
-    
+
     if session_id not in _sessions:
         raise ToolError(
             f"Session '{session_id}' not found. Create a new session with create_transform_session.",
             ErrorCodes.VALIDATION_ERROR
         )
-    
+
     session = _sessions[session_id]
     session["last_activity"] = datetime.now()
-    
+
     # Determine write range based on session type (interleaved vs contiguous)
     if "chunks" in session:
         # Interleaved mode
         if session["current_chunk_idx"] >= len(session["chunks"]):
             raise ToolError("Session already complete", ErrorCodes.VALIDATION_ERROR)
-            
+
         current_chunk_start, current_chunk_end = session["chunks"][session["current_chunk_idx"]]
         chunk_size = current_chunk_end - current_chunk_start + 1
         write_range = f"{session['start_out_col']}{current_chunk_start}:{session['output_columns'].split(':')[-1]}{current_chunk_end}"
@@ -358,12 +357,12 @@ def process_chunk_sync(
 
     # Trim data to match expected rows
     write_data = data[:rows_to_write]
-    
+
     # Get worksheet
     app = get_excel_app()
     workbook = get_workbook(app, session["workbook_name"])
     worksheet = get_worksheet(workbook, session["sheet_name"])
-    
+
     # Verify against source
     verification = _verify_against_source(
         worksheet=worksheet,
@@ -373,7 +372,7 @@ def process_chunk_sync(
         start_row=current_row_for_verification,
         match_mode="all_columns"  # Updated to Holographic Verification
     )
-    
+
     # Check for mismatches (zero tolerance)
     if verification["mismatch_count"] > 0:
         session["errors"].extend(verification["mismatches"])
@@ -383,7 +382,7 @@ def process_chunk_sync(
             f"Session paused. Fix data and retry process_chunk.",
             ErrorCodes.VALIDATION_ERROR
         )
-    
+
     # Write the data
     result = write_range_sync(
         workbook_name=session["workbook_name"],
@@ -394,11 +393,11 @@ def process_chunk_sync(
         activate=True,
         max_cells=rows_to_write * session["num_output_cols"],
     )
-    
+
     # Update session state & determine next step
     session["processed_rows"] += rows_to_write
     session["verified_rows"] += verification["matches"]
-    
+
     if "chunks" in session:
         # Interleaved mode: Move to next chunk in list
         session["current_chunk_idx"] += 1
@@ -424,11 +423,11 @@ def process_chunk_sync(
             "status": "complete",
             "message": f"Session complete! Processed {session['processed_rows']} rows with 100% verification.",
         }
-    
+
     # Read next chunk source data
     next_source_range = f"{session['source_column']}{next_start}:{session['source_column']}{next_end}"
     next_source_data = worksheet.Range(next_source_range).Value
-    
+
     # Normalize
     if next_source_data is None:
         next_chunk_source = []
@@ -439,13 +438,13 @@ def process_chunk_sync(
         ]
     else:
         next_chunk_source = [next_source_data]
-        
+
     # Calculate remaining rows
     if "chunks" in session:
         remaining = sum(ce - cs + 1 for cs, ce in session["chunks"][session["current_chunk_idx"]:])
     else:
         remaining = session["end_row"] - session["current_row"] + 1
-    
+
     return {
         "success": True,
         "session_id": session_id,
@@ -479,16 +478,16 @@ def get_session_status_sync(session_id: str) -> Dict[str, Any]:
         Dictionary with session status and progress
     """
     _init_com()
-    
+
     if session_id not in _sessions:
         raise ToolError(
             f"Session '{session_id}' not found.",
             ErrorCodes.VALIDATION_ERROR
         )
-    
+
     session = _sessions[session_id]
     session["last_activity"] = datetime.now()
-    
+
     # Calculate remaining and current row
     if "chunks" in session:
         # Interleaved mode
@@ -499,7 +498,7 @@ def get_session_status_sync(session_id: str) -> Dict[str, Any]:
         else:
             remaining = sum(ce - cs + 1 for cs, ce in session["chunks"][session["current_chunk_idx"]:])
             current_row_for_display = session["chunks"][session["current_chunk_idx"]][0]
-        
+
         total_rows = sum(ce - cs + 1 for cs, ce in session["chunks"])
     else:
         # Legacy contiguous mode
@@ -524,13 +523,13 @@ def get_session_status_sync(session_id: str) -> Dict[str, Any]:
         "errors": session["errors"][-5:],  # Last 5 errors
         "status": session["status"],
     }
-    
+
     # If session is active, include next chunk data
     if session["status"] == "active" and remaining > 0:
         app = get_excel_app()
         workbook = get_workbook(app, session["workbook_name"])
         worksheet = get_worksheet(workbook, session["sheet_name"])
-        
+
         if "chunks" in session:
              next_chunk_start, next_chunk_end = session["chunks"][session["current_chunk_idx"]]
         else:
@@ -539,7 +538,7 @@ def get_session_status_sync(session_id: str) -> Dict[str, Any]:
 
         next_source_range = f"{session['source_column']}{next_chunk_start}:{session['source_column']}{next_chunk_end}"
         next_source_data = worksheet.Range(next_source_range).Value
-        
+
         if next_source_data is None:
             next_chunk_source = []
         elif isinstance(next_source_data, (list, tuple)):
@@ -549,7 +548,7 @@ def get_session_status_sync(session_id: str) -> Dict[str, Any]:
             ]
         else:
             next_chunk_source = [next_source_data]
-        
+
         result["next_chunk"] = {
             "start_row": next_chunk_start,
             "end_row": next_chunk_end,
@@ -560,5 +559,5 @@ def get_session_status_sync(session_id: str) -> Dict[str, Any]:
             f"Transform the {len(next_chunk_source)} source values above, "
             f"then call process_chunk with session_id='{session_id}'"
         )
-    
+
     return result

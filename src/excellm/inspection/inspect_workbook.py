@@ -21,14 +21,12 @@ from .types import (
     WorkbookInfo,
 )
 from .utils import (
+    compute_density,
     normalize_address,
     parse_range_bounds,
-    sheet_name_priority_boost,
-    safe_int,
     safe_bool,
-    compute_density,
+    sheet_name_priority_boost,
 )
-
 
 # Excel constants
 XL_SHEET_VISIBLE = -1
@@ -51,21 +49,21 @@ def inspect_workbook_sync() -> Dict[str, Any]:
         Exception if Excel not running or no workbook open
     """
     start_time = time.perf_counter()
-    
+
     pythoncom.CoInitialize()
-    
+
     try:
         app = win32.GetActiveObject("Excel.Application")
     except Exception as e:
         raise RuntimeError(f"Excel not running or not accessible: {e}")
-    
+
     if app.Workbooks.Count == 0:
         raise RuntimeError("No workbook is open in Excel")
-    
+
     wb = app.ActiveWorkbook
     if not wb:
         raise RuntimeError("No active workbook found")
-    
+
     # Workbook info
     workbook_info = WorkbookInfo(
         name=wb.Name,
@@ -73,17 +71,17 @@ def inspect_workbook_sync() -> Dict[str, Any]:
         readOnly=safe_bool(wb.ReadOnly),
         protected=safe_bool(wb.ProtectStructure),
     )
-    
+
     # Active sheet
     active_sheet_name = ""
     try:
         active_sheet_name = app.ActiveSheet.Name
     except Exception:
         pass
-    
+
     # Inspect each sheet
     sheets_index: List[SheetIndex] = []
-    
+
     for i in range(1, wb.Worksheets.Count + 1):
         try:
             ws = wb.Worksheets(i)
@@ -108,12 +106,12 @@ def inspect_workbook_sync() -> Dict[str, Any]:
                 ))
             except Exception:
                 pass
-    
+
     # Compute recommendations
     recommendations = _compute_recommendations(sheets_index, active_sheet_name)
-    
+
     duration_ms = int((time.perf_counter() - start_time) * 1000)
-    
+
     result = InspectWorkbookResult(
         meta=Meta(
             tool="inspect_workbook",
@@ -126,7 +124,7 @@ def inspect_workbook_sync() -> Dict[str, Any]:
         sheetsIndex=sheets_index,
         recommendations=recommendations,
     )
-    
+
     return result.model_dump()
 
 
@@ -141,7 +139,7 @@ def _inspect_sheet(ws, app) -> SheetIndex:
         SheetIndex with sheet metadata
     """
     name = ws.Name
-    
+
     # Sheet state
     visibility = ws.Visible
     if visibility == XL_SHEET_VISIBLE:
@@ -150,28 +148,28 @@ def _inspect_sheet(ws, app) -> SheetIndex:
         state = "veryHidden"
     else:
         state = "hidden"
-    
+
     # Protected
     protected = safe_bool(ws.ProtectContents)
-    
+
     # UsedRange
     used_range = ws.UsedRange
     used_range_addr = normalize_address(used_range.Address)
-    
+
     # Parse bounds for analysis
     start_row, start_col, end_row, end_col = parse_range_bounds(used_range_addr)
     total_rows = end_row - start_row + 1
     total_cols = end_col - start_col + 1
-    
+
     # Layout flags
     layout = _get_layout_flags(ws, used_range, app)
-    
+
     # Quick data approximation (sampling-based)
     data_cell_count = None
     non_empty_rows = None
     non_empty_cols = None
     real_data_bounds = None
-    
+
     # Use SpecialCells for quick count approximation
     try:
         # Count formulas
@@ -181,7 +179,7 @@ def _inspect_sheet(ws, app) -> SheetIndex:
             formulas_count = formula_cells.Cells.Count
         except Exception:
             pass
-        
+
         # Count constants
         constants_count = 0
         try:
@@ -189,13 +187,13 @@ def _inspect_sheet(ws, app) -> SheetIndex:
             constants_count = constant_cells.Cells.Count
         except Exception:
             pass
-        
+
         data_cell_count = formulas_count + constants_count
         layout.formulasCount = formulas_count if formulas_count > 0 else None
-        
+
     except Exception:
         pass
-    
+
     # Compute flags
     flags = _compute_sheet_flags(
         state=state,
@@ -204,11 +202,11 @@ def _inspect_sheet(ws, app) -> SheetIndex:
         data_cell_count=data_cell_count,
         layout=layout,
     )
-    
+
     # Compute score
     total_cells = total_rows * total_cols
     density = compute_density(data_cell_count, total_cells) if data_cell_count else None
-    
+
     priority = _compute_priority(
         state=state,
         name=name,
@@ -216,7 +214,7 @@ def _inspect_sheet(ws, app) -> SheetIndex:
         layout=layout,
         flags=flags,
     )
-    
+
     return SheetIndex(
         name=name,
         state=state,
@@ -244,20 +242,20 @@ def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
         LayoutFlags with detected features
     """
     layout = LayoutFlags()
-    
+
     # Tables (ListObjects)
     try:
         table_count = ws.ListObjects.Count
         layout.hasTableObjects = table_count > 0 if table_count is not None else None
     except Exception:
         layout.hasTableObjects = None
-    
+
     # AutoFilter
     try:
         layout.hasAutoFilter = safe_bool(ws.AutoFilterMode)
     except Exception:
         layout.hasAutoFilter = None
-    
+
     # Freeze panes - need to check window
     try:
         # Get the window for this workbook
@@ -268,7 +266,7 @@ def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
             layout.hasFreezePanes = False
     except Exception:
         layout.hasFreezePanes = None
-    
+
     # Merged cells - approximate count
     try:
         merge_areas = used_range.MergeAreas
@@ -276,7 +274,7 @@ def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
             layout.mergedCellsCount = merge_areas.Count
     except Exception:
         layout.mergedCellsCount = None
-    
+
     # Comments
     try:
         comments = ws.Comments
@@ -284,12 +282,12 @@ def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
             layout.commentsCount = comments.Count
     except Exception:
         layout.commentsCount = None
-    
+
     # Hidden rows/cols - sample-based approximation
     try:
         hidden_rows = 0
         hidden_cols = 0
-        
+
         # Sample every 50th row for hidden check
         row_count = used_range.Rows.Count
         for r in range(1, min(row_count + 1, 1001), 50):
@@ -298,13 +296,13 @@ def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
                     hidden_rows += 1
             except Exception:
                 pass
-        
+
         # Scale up approximation
         if row_count > 1000:
             layout.hiddenRowsCount = hidden_rows * 50
         else:
             layout.hiddenRowsCount = hidden_rows * 50 if hidden_rows > 0 else 0
-        
+
         # Sample columns
         col_count = used_range.Columns.Count
         for c in range(1, min(col_count + 1, 51), 5):
@@ -313,13 +311,13 @@ def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
                     hidden_cols += 1
             except Exception:
                 pass
-        
+
         layout.hiddenColsCount = hidden_cols * 5 if hidden_cols > 0 else 0
-        
+
     except Exception:
         layout.hiddenRowsCount = None
         layout.hiddenColsCount = None
-    
+
     return layout
 
 
@@ -343,52 +341,52 @@ def _compute_sheet_flags(
         List of flag strings
     """
     flags = []
-    
+
     # Hidden sheet
     if state in ("hidden", "veryHidden"):
         flags.append("HIDDEN_SHEET")
-    
+
     # Extreme used range
     if total_rows > 200000 or total_cols > 200:
         flags.append("EXTREME_USED_RANGE")
-    
+
     # Empty or near empty
     if data_cell_count is not None and data_cell_count == 0:
         flags.append("EMPTY_OR_NEAR_EMPTY")
     elif data_cell_count is not None and data_cell_count < 10:
         flags.append("EMPTY_OR_NEAR_EMPTY")
-    
+
     # Likely format only (huge used range but no data)
     total_cells = total_rows * total_cols
     if total_cells > 10000 and (data_cell_count or 0) < 100:
         if layout.formulasCount in (None, 0):
             flags.append("LIKELY_FORMAT_ONLY")
-    
+
     # Used range inflated
     if data_cell_count is not None and total_cells > 0:
         ratio = data_cell_count / total_cells
         if ratio < 0.01 and total_cells > 1000:  # Less than 1% filled
             flags.append("USED_RANGE_INFLATED")
-    
+
     # Layout features
     if layout.hasTableObjects:
         flags.append("HAS_TABLE_OBJECTS")
-    
+
     if layout.hasAutoFilter:
         flags.append("HAS_FILTER")
-    
+
     if layout.hasFreezePanes:
         flags.append("HAS_FREEZE_PANES")
-    
+
     if layout.mergedCellsCount and layout.mergedCellsCount > 0:
         flags.append("MERGED_CELLS_PRESENT")
-    
+
     if layout.commentsCount and layout.commentsCount > 0:
         flags.append("HAS_COMMENTS_NOTES")
-    
+
     if layout.formulasCount and layout.formulasCount > 0:
         flags.append("HAS_FORMULAS")
-    
+
     return flags
 
 
@@ -412,7 +410,7 @@ def _compute_priority(
         Priority score 0..1
     """
     priority = 0.5  # Base
-    
+
     # Visibility
     if state == "visible":
         priority += 0.2
@@ -420,7 +418,7 @@ def _compute_priority(
         priority -= 0.2
     elif state == "veryHidden":
         priority -= 0.4
-    
+
     # Data presence
     if data_cell_count is not None:
         if data_cell_count > 1000:
@@ -431,20 +429,20 @@ def _compute_priority(
             priority += 0.05
         elif data_cell_count == 0:
             priority -= 0.3
-    
+
     # Tables boost
     if layout.hasTableObjects:
         priority += 0.1
-    
+
     # Name heuristics
     priority += sheet_name_priority_boost(name)
-    
+
     # Penalize problematic sheets
     if "LIKELY_FORMAT_ONLY" in flags:
         priority -= 0.3
     if "EXTREME_USED_RANGE" in flags and "EMPTY_OR_NEAR_EMPTY" in flags:
         priority -= 0.2
-    
+
     # Clamp to 0..1
     return max(0.0, min(1.0, priority))
 
@@ -463,11 +461,11 @@ def _compute_recommendations(
     """
     # Sort by priority
     sorted_sheets = sorted(sheets, key=lambda s: s.score.priority, reverse=True)
-    
+
     # Primary candidates - top sheets that are safe
     primary_candidates = []
     avoid_sheets = []
-    
+
     for sheet in sorted_sheets:
         if "LIKELY_FORMAT_ONLY" in sheet.flags:
             avoid_sheets.append(sheet.name)
@@ -478,16 +476,16 @@ def _compute_recommendations(
         else:
             if len(primary_candidates) < 4:
                 primary_candidates.append(sheet.name)
-    
+
     # Next explore sheet
     next_explore = active_sheet_name
-    
+
     # If active is in avoid list, pick top candidate
     if active_sheet_name in avoid_sheets and primary_candidates:
         next_explore = primary_candidates[0]
     elif not active_sheet_name and primary_candidates:
         next_explore = primary_candidates[0]
-    
+
     return Recommendations(
         primaryCandidateSheets=primary_candidates,
         avoidSheets=avoid_sheets,

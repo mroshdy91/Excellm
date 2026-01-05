@@ -4,11 +4,10 @@ This module provides in-memory filtering capabilities for 2D Excel data arrays.
 Supports nested boolean logic (AND/OR/NOT), equations, and advanced operators.
 """
 
-import re
 import logging
-from datetime import datetime
+import re
 from enum import Enum
-from typing import Any, Optional, Union, List, Tuple
+from typing import Any, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -473,7 +472,7 @@ class FilterEngine:
     ) -> List[Optional[int]]:
         """Check if row matches a filter group (AND/OR/NOT)."""
         operator = filter_group.operator
-        
+
         if not filter_group.conditions:
             return [None]  # Empty group matches everything
 
@@ -741,17 +740,17 @@ class FilterEngine:
             )
         elif isinstance(filters, dict):
             filters = self._parse_filter_dict(filters)
-        
+
         # Apply filter to each row, tracking indices
         filtered_rows = []
         matched_indices = []
-        
+
         for i, row in enumerate(data_rows):
             col_indices = self._matches_filter(row, filters, headers)
             if col_indices:
                 filtered_rows.append(row)
                 matched_indices.append(i)
-        
+
         return (filtered_rows, matched_indices)
 
     def get_warnings(self) -> List[str]:

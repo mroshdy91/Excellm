@@ -8,7 +8,7 @@ Supports creating pivot tables in Excel workbooks with dual-engine support:
 import logging
 import os
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def create_pivot_table_sync(
         Dictionary with operation result
     """
     from ..core.connection import get_excel_app, get_workbook, get_worksheet
-    
+
     # Validate aggregation function
     agg_func_lower = agg_func.lower()
     if agg_func_lower not in XL_AGG_FUNCTIONS:
@@ -66,19 +66,19 @@ def create_pivot_table_sync(
             "error": f"Invalid aggregation function: {agg_func}. "
                     f"Supported: {', '.join(XL_AGG_FUNCTIONS.keys())}",
         }
-    
+
     if not rows:
         return {
             "success": False,
             "error": "At least one row field is required",
         }
-    
+
     if not values:
         return {
             "success": False,
             "error": "At least one value field is required",
         }
-    
+
     try:
         # Engine Selection Logic
         use_com = True
@@ -87,7 +87,7 @@ def create_pivot_table_sync(
             workbook = get_workbook(excel, workbook_name)
         except Exception:
             use_com = False
-            
+
         if not use_com:
             # Fallback to openpyxl if it's a file
             if os.path.exists(workbook_name):
@@ -102,7 +102,7 @@ def create_pivot_table_sync(
                 }
 
         source_sheet = get_worksheet(workbook, sheet_name)
-        
+
         # Get the source data range
         try:
             source_range = source_sheet.Range(data_range)
@@ -111,7 +111,7 @@ def create_pivot_table_sync(
                 "success": False,
                 "error": f"Invalid data range: {data_range}. {str(e)}",
             }
-        
+
         # Create or get target sheet
         if target_sheet:
             try:
@@ -129,28 +129,28 @@ def create_pivot_table_sync(
             except Exception:
                 pivot_sheet = workbook.Sheets.Add()
                 pivot_sheet.Name = pivot_sheet_name
-                
+
             target_sheet = pivot_sheet_name
-        
+
         # Get target cell position
         target_range = pivot_sheet.Range(target_cell)
-        
+
         # Generate pivot table name if not provided
         if not table_name:
             table_name = f"PivotTable_{uuid.uuid4().hex[:8]}"
-        
+
         # Create pivot cache
         pivot_cache = workbook.PivotCaches().Create(
             SourceType=1,  # xlDatabase
             SourceData=source_range,
         )
-        
+
         # Create pivot table
         pivot_table = pivot_cache.CreatePivotTable(
             TableDestination=target_range,
             TableName=table_name,
         )
-        
+
         # Add row fields
         for i, field_name in enumerate(rows):
             try:
@@ -159,7 +159,7 @@ def create_pivot_table_sync(
                 field.Position = i + 1
             except Exception as e:
                 logger.warning(f"Could not add row field '{field_name}': {e}")
-        
+
         # Add column fields
         if columns:
             for i, field_name in enumerate(columns):
@@ -169,7 +169,7 @@ def create_pivot_table_sync(
                     field.Position = i + 1
                 except Exception as e:
                     logger.warning(f"Could not add column field '{field_name}': {e}")
-        
+
         # Add value fields
         for field_name in values:
             try:
@@ -180,9 +180,9 @@ def create_pivot_table_sync(
                 field.Caption = f"{agg_func.capitalize()} of {field_name}"
             except Exception as e:
                 logger.warning(f"Could not add value field '{field_name}': {e}")
-        
+
         logger.info(f"Created pivot table '{table_name}' in {target_sheet}")
-        
+
         return {
             "success": True,
             "message": "Pivot table created successfully",
@@ -198,7 +198,7 @@ def create_pivot_table_sync(
                 "aggregation": agg_func,
             },
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to create pivot table: {e}")
         return {
@@ -223,14 +223,14 @@ def refresh_pivot_table_sync(
         Dictionary with operation result
     """
     from ..core.connection import get_excel_app, get_workbook, get_worksheet
-    
+
     try:
         excel = get_excel_app()
         workbook = get_workbook(excel, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         refreshed = []
-        
+
         if table_name:
             # Refresh specific pivot table
             try:
@@ -250,13 +250,13 @@ def refresh_pivot_table_sync(
                     refreshed.append(pt.Name)
                 except Exception as e:
                     logger.warning(f"Could not refresh pivot table: {e}")
-        
+
         return {
             "success": True,
             "message": f"Refreshed {len(refreshed)} pivot table(s)",
             "refreshed": refreshed,
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to refresh pivot table: {e}")
         return {
@@ -279,18 +279,18 @@ def list_pivot_tables_sync(
         Dictionary with list of pivot tables
     """
     from ..core.connection import get_excel_app, get_workbook, get_worksheet
-    
+
     try:
         excel = get_excel_app()
         workbook = get_workbook(excel, workbook_name)
-        
+
         pivot_tables = []
-        
+
         if sheet_name:
             sheets = [get_worksheet(workbook, sheet_name)]
         else:
             sheets = [workbook.Sheets(i) for i in range(1, workbook.Sheets.Count + 1)]
-        
+
         for ws in sheets:
             try:
                 for pt in ws.PivotTables():
@@ -303,13 +303,13 @@ def list_pivot_tables_sync(
                     pivot_tables.append(pivot_info)
             except Exception:
                 continue  # Sheet might not have pivot tables
-        
+
         return {
             "success": True,
             "pivot_tables": pivot_tables,
             "count": len(pivot_tables),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to list pivot tables: {e}")
         return {
@@ -336,12 +336,12 @@ def delete_pivot_table_sync(
         Dictionary with operation result
     """
     from ..core.connection import get_excel_app, get_workbook, get_worksheet
-    
+
     try:
         excel = get_excel_app()
         workbook = get_workbook(excel, workbook_name)
         worksheet = get_worksheet(workbook, sheet_name)
-        
+
         try:
             pivot_table = worksheet.PivotTables(table_name)
         except Exception:
@@ -349,7 +349,7 @@ def delete_pivot_table_sync(
                 "success": False,
                 "error": f"Pivot table '{table_name}' not found",
             }
-        
+
         if keep_data:
             # Convert to values first
             try:
@@ -358,18 +358,18 @@ def delete_pivot_table_sync(
                 table_range.PasteSpecial(Paste=-4163)  # xlPasteValues
             except Exception as e:
                 logger.warning(f"Could not convert to values: {e}")
-        
+
         # Delete the pivot table
         pivot_table.TableRange2.Clear()
-        
+
         logger.info(f"Deleted pivot table '{table_name}' from {sheet_name}")
-        
+
         return {
             "success": True,
             "message": f"Pivot table '{table_name}' deleted successfully",
             "data_kept": keep_data,
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to delete pivot table: {e}")
         return {
@@ -419,42 +419,42 @@ def create_pivot_table_openpyxl(
     """
     try:
         from openpyxl import load_workbook
-        from openpyxl.utils import range_boundaries, get_column_letter
+        from openpyxl.utils import get_column_letter, range_boundaries
     except ImportError:
         return {
             "success": False,
             "error": "openpyxl is required for file-based operations. Install with: pip install openpyxl",
         }
-        
+
     # Since openpyxl pivot tables are complex and often require Excel to calc,
     # we'll implement a "Static Summary Table" which is more robust for LLMs to read back immediately.
     # This manually aggregates the data using Python.
-    
+
     try:
         wb = load_workbook(filepath)
         if sheet_name not in wb.sheetnames:
             return {"success": False, "error": f"Sheet '{sheet_name}' not found"}
-            
+
         ws = wb[sheet_name]
-        
+
         # Parse range (remove sheet name if present)
         if "!" in data_range:
             data_range = data_range.split("!")[-1]
-            
+
         min_col, min_row, max_col, max_row = range_boundaries(data_range)
-        
+
         # Read header row to map column names to indices
         headers = {}
         for col_idx in range(min_col, max_col + 1):
             cell_val = ws.cell(row=min_row, column=col_idx).value
             if cell_val:
                 headers[str(cell_val)] = col_idx
-                
+
         # Validate fields
         for f in rows + values + (columns or []):
             if f not in headers:
                 return {"success": False, "error": f"Field '{f}' not found in headers"}
-                
+
         # Create/Get target sheet
         if target_sheet:
             if target_sheet in wb.sheetnames:
@@ -471,33 +471,33 @@ def create_pivot_table_openpyxl(
             else:
                 target_ws = wb.create_sheet(target_sheet_name)
             target_sheet = target_sheet_name
-            
+
         # ---------------------------------------------------------
         # Perform Aggregation (Python-side Pivot)
         # ---------------------------------------------------------
-        
+
         # Data structure: { (row_key_tuple, col_key_tuple): {val_field: [values]} }
         data_map = {}
         row_keys_set = set()
         col_keys_set = set()
-        
+
         for r in range(min_row + 1, max_row + 1):
             # Build row key
             r_key = tuple(ws.cell(row=r, column=headers[field]).value for field in rows)
-            
+
             # Build column key
             if columns:
                 c_key = tuple(ws.cell(row=r, column=headers[field]).value for field in columns)
             else:
                 c_key = ("Total",)
-                
+
             row_keys_set.add(r_key)
             col_keys_set.add(c_key)
-            
+
             combo_key = (r_key, c_key)
             if combo_key not in data_map:
                 data_map[combo_key] = {v: [] for v in values}
-                
+
             for v_field in values:
                 val = ws.cell(row=r, column=headers[v_field]).value
                 # Coerce to float
@@ -509,27 +509,27 @@ def create_pivot_table_openpyxl(
                 except ValueError:
                     val = 0.0
                 data_map[combo_key][v_field].append(val)
-                
+
         # Sort keys
         sorted_row_keys = sorted(list(row_keys_set), key=lambda x: str(x))
         sorted_col_keys = sorted(list(col_keys_set), key=lambda x: str(x))
-        
+
         # ---------------------------------------------------------
         # Write Result Table
         # ---------------------------------------------------------
-        
+
         current_row = 1
         current_col = 1
-        
+
         # Styles
         from openpyxl.styles import Font
         bold_font = Font(bold=True)
-        
+
         # Write Headers
         # Row Labels
         for i, field in enumerate(rows):
             target_ws.cell(row=current_row, column=current_col + i, value=field).font = bold_font
-            
+
         # Column Labels (if any)
         if columns:
             # Shift data start
@@ -546,9 +546,9 @@ def create_pivot_table_openpyxl(
             for v_field in values:
                 target_ws.cell(row=current_row, column=data_start_col, value=f"{agg_func.capitalize()} of {v_field}").font = bold_font
                 data_start_col += 1
-                
+
         current_row += 1
-        
+
         # Helper for aggregation
         def calc_agg(vals, func):
             if not vals: return 0
@@ -558,16 +558,16 @@ def create_pivot_table_openpyxl(
             if func == "max": return max(vals)
             if func == "min": return min(vals)
             return 0
-            
+
         # Write Data
 
         for r_key in sorted_row_keys:
             # Write Row Labels
             for i, val in enumerate(r_key):
                 target_ws.cell(row=current_row, column=1 + i, value=val)
-                
+
             col_ptr = 1 + len(rows)
-            
+
             # Write Data Values
             if columns:
                 for c_key in sorted_col_keys:
@@ -589,11 +589,11 @@ def create_pivot_table_openpyxl(
                     else:
                         target_ws.cell(row=current_row, column=col_ptr, value=0)
                     col_ptr += 1
-            
+
             current_row += 1
-            
+
         wb.save(filepath)
-        
+
         return {
             "success": True,
             "message": "Pivot summary table created (Static Values)",
@@ -604,7 +604,7 @@ def create_pivot_table_openpyxl(
                 "cols_written": col_ptr - 1
             }
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to create pivot table with openpyxl: {e}")
         return {
