@@ -1,5 +1,10 @@
 # ExceLLM: Excel Live MCP Server
 
+[![PyPI version](https://img.shields.io/pypi/v/excellm)](https://pypi.org/project/excellm/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/excellm)](https://pypi.org/project/excellm/)
+[![Python version](https://img.shields.io/pypi/pyversions/excellm)](https://pypi.org/project/excellm/)
+[![License](https://img.shields.io/pypi/l/excellm)](https://pypi.org/project/excellm/)
+
 A Model Context Protocol (MCP) server for Excel automation with dual-engine support. Enables LLMs (Claude, ChatGPT, Cursor, etc.) to interact with Excel files through natural language - live on Windows or file-based cross-platform.
 
 ## Features
@@ -34,6 +39,12 @@ A Model Context Protocol (MCP) server for Excel automation with dual-engine supp
 - **No Excel required**
 
 ## Installation
+
+### From PyPI (Recommended)
+
+```bash
+pip install excellm
+```
 
 ### From Source
 

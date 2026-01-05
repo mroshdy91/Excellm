@@ -1,0 +1,99 @@
+## 🎉 ExceLLM v1.1.0 - Enhanced Architecture & New Features
+
+### ✨ New Features
+
+- **Configuration Management** (config.py)
+  - Centralized configuration system
+  - Environment variable support
+  - Default settings and overrides
+
+- **Audit Logging System** (core/audit.py)
+  - Operation logging and tracking
+  - Debugging support
+  - Performance monitoring
+
+- **Dual-Engine Architecture**
+  - COM Engine (Windows): Live Excel operations
+  - File Engine (Cross-platform): openpyxl-based file operations
+  - Engine abstraction layer for seamless switching
+
+- **Engine Abstraction Layer** (core/engine.py)
+  - Unified interface for COM and File engines
+  - Cross-platform compatibility
+  - Type-safe operations
+
+### 📝 Improvements
+
+- **Enhanced Error Handling**
+  - Centralized error management (core/errors.py)
+  - Better error messages and recovery
+  - Improved connection error handling
+
+- **Performance Optimizations**
+  - Batch range reads for better performance
+  - Connection pooling for reduced overhead
+  - Optimized tool implementations
+
+- **Better Validation**
+  - Enhanced input validation (validators.py)
+  - Type checking for all operations
+  - Improved error messages
+
+### 📚 Documentation Updates
+
+- **Architecture Section**
+  - Complete project structure documentation
+  - All modules and files documented
+  - Updated tool categorization
+  - Dual-engine architecture explained
+
+- **Key Components**
+  - 8 comprehensive component sections
+  - Detailed module descriptions
+  - Configuration and filters documented
+  - Inspection module added
+
+- **Version History**
+  - Added v1.1.0 entry
+  - Maintained release tracking
+
+### 🔧 Internal Changes
+
+- Refactored core modules for better organization
+- Improved connection management (core/connection.py)
+- Better separation of concerns across tools
+- Enhanced utility functions (core/utils.py)
+
+### 🎯 Tool Enhancements
+
+All 34 MCP tools improved with:
+- Better error handling
+- Performance optimizations
+- Enhanced validation
+- Clearer error messages
+
+### 📦 Installation
+
+\`\`\`bash
+pip install excellm==1.1.0
+\`\`\`
+
+Or install from source:
+\`\`\`bash
+git clone https://github.com/mroshdy91/Excellm.git
+cd Excellm
+pip install -e .
+\`\`\`
+
+### 🔄 Upgrade from v1.0.0
+
+Simply upgrade to the new version:
+\`\`\`bash
+pip install --upgrade excellm==1.1.0
+\`\`\`
+
+All existing functionality preserved with new features added.
+
+---
+
+**Full Changelog**: https://github.com/mroshdy91/Excellm/compare/v1.0.0...v1.1.0
