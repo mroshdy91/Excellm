@@ -491,17 +491,36 @@ class ExcelSessionManager:
         data = []
         error_codes = []
         error_messages = []
-        if values:
-            # Check if values is 2D (multiple rows) - Excel returns tuples, not lists
-            is_2d = isinstance(values, (list, tuple)) and len(values) > 0 and isinstance(values[0], (list, tuple))
+        if values is not None:
+            # Check if values is a list/tuple (range values) or scalar (single value)
+            if isinstance(values, (list, tuple)):
+                # Check if values is 2D (multiple rows) - Excel returns tuples, not lists
+                is_2d = len(values) > 0 and isinstance(values[0], (list, tuple))
 
-            if is_2d:
-                # Range spans multiple rows
-                for row in values:
+                if is_2d:
+                    # Range spans multiple rows
+                    for row in values:
+                        row_data = []
+                        row_error_codes = []
+                        row_error_msgs = []
+                        for cell in row:
+                            row_data.append(str(cell) if cell is not None else "")
+                            error_info = get_excel_error_info(cell)
+                            if error_info:
+                                row_error_codes.append(error_info[0])
+                                row_error_msgs.append(error_info[1])
+                            else:
+                                row_error_codes.append(None)
+                                row_error_msgs.append(None)
+                        data.append(row_data)
+                        error_codes.append(row_error_codes)
+                        error_messages.append(row_error_msgs)
+                else:
+                    # Single row (1D list/tuple)
                     row_data = []
                     row_error_codes = []
                     row_error_msgs = []
-                    for cell in row:
+                    for cell in values:
                         row_data.append(str(cell) if cell is not None else "")
                         error_info = get_excel_error_info(cell)
                         if error_info:
@@ -514,22 +533,20 @@ class ExcelSessionManager:
                     error_codes.append(row_error_codes)
                     error_messages.append(row_error_msgs)
             else:
-                # Single row
-                row_data = []
-                row_error_codes = []
-                row_error_msgs = []
-                for cell in values:
-                    row_data.append(str(cell) if cell is not None else "")
-                    error_info = get_excel_error_info(cell)
-                    if error_info:
-                        row_error_codes.append(error_info[0])
-                        row_error_msgs.append(error_info[1])
-                    else:
-                        row_error_codes.append(None)
-                        row_error_msgs.append(None)
+                # Scalar value (single cell content like 'Text' or 123)
+                # Treat as 1x1 grid
+                row_data = [str(values)]
+                error_info = get_excel_error_info(values)
+                if error_info:
+                    row_err_code = [error_info[0]]
+                    row_err_msg = [error_info[1]]
+                else:
+                    row_err_code = [None]
+                    row_err_msg = [None]
+                
                 data.append(row_data)
-                error_codes.append(row_error_codes)
-                error_messages.append(row_error_msgs)
+                error_codes.append(row_err_code)
+                error_messages.append(row_err_msg)
 
         # Calculate dimensions
         rows = len(data)
