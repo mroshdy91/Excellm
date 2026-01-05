@@ -179,8 +179,6 @@ Get the history of recent user actions from the Undo or Redo stack.
 
 ### ✍️ Writing & Editing
 
-### ✍️ Writing & Editing
-
 #### 10. `write(workbook_name, sheet_name, reference, data, ...)`
 Write values. Supports single cells or 2D arrays. Includes safety checks.
 **Usage:** `await write("data.xlsx", "Sheet1", "A1", "Hello")`
@@ -198,8 +196,6 @@ Sort data by multiple columns.
 **Usage:** `await sort_range("data.xlsx", "Sheet1", "A1:D50", [{"column": "A", "order": "asc"}])`
 
 ---
-
-### 🎨 Formatting
 
 ### 🎨 Formatting
 
@@ -233,8 +229,6 @@ List all merged cell ranges in a sheet.
 
 ### 📋 Sheet & Structure Management
 
-### 📋 Sheet & Structure Management
-
 #### 19. `manage_sheet(workbook_name, action, sheet_name, ...)`
 Add, rename, delete, hide, copy, or move worksheets.
 **Usage:** `await manage_sheet("data.xlsx", action="add", sheet_name="NewSheet")`
@@ -248,8 +242,6 @@ Delete rows or columns.
 **Usage:** `await delete("data.xlsx", "Sheet1", "column", "C")`
 
 ---
-
-### 📊 Excel Tables
 
 ### 📊 Excel Tables
 
@@ -269,8 +261,6 @@ Remove table structure, optionally keeping data.
 
 ### 📈 Charts & Pivot Tables
 
-### 📈 Charts & Pivot Tables
-
 #### 25. `create_chart(workbook_name, sheet_name, data_range, chart_type, target_cell, ...)`
 Create charts (line, bar, pie, scatter, area) from data.
 - **Live Mode:** Native Excel chart automation.
@@ -284,8 +274,6 @@ Create pivot tables with aggregation.
 **Usage:** `await create_pivot_table("data.xlsx", "Sheet1", "A1:D100", rows=["Category"], values=["Amount"], agg_func="sum")`
 
 ---
-
-### ⚙️ Advanced Features
 
 ### ⚙️ Advanced Features
 
@@ -306,10 +294,6 @@ Validate Excel formula syntax, check for errors, and get correction suggestions.
 **Usage:** `await validate_formula("=SUM(A1:A10)")`
 
 ---
-
-### 🚀 Big Data Sessions (Stateful)
-
-For handling large datasets (>50 rows) safely.
 
 ### 🚀 Big Data Sessions (Stateful)
 
@@ -766,7 +750,7 @@ ExceLLM/
 ### Key Components
 
 1. **FastMCP Server** (`server.py`):
-   - Provides 27 MCP tools
+   - Provides 34 MCP tools
    - Handles tool registration and routing
    - Manages server lifecycle
    - Dual-engine architecture support
