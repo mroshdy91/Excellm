@@ -963,6 +963,21 @@ For issues, questions, or contributions:
 
 ## Version History
 
+### 1.1.0 (2026-01-05)
+- **New Features:**
+  - Configuration management system (config.py)
+  - Audit logging for operation tracking (core/audit.py)
+  - Dual-engine architecture with COM and File engines
+  - Engine abstraction layer for cross-platform support
+- **Improvements:**
+  - Enhanced error handling and validation
+  - Performance optimizations with batch reads and connection pooling
+  - Updated documentation with complete architecture
+  - All 34 MCP tools improved with better error messages
+- **Documentation:**
+  - Complete Architecture section with all modules documented
+  - Updated Key Components with 8 comprehensive sections
+
 ### 1.0.0-alpha (2026-01-04)
 - Initial alpha release
 - 34 MCP tools for Excel automation
