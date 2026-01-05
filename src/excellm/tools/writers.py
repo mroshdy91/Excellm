@@ -29,6 +29,9 @@ MAX_CELLS_LIMIT = 250
 
 logger = logging.getLogger(__name__)
 
+# Import audit logging
+from ..core.audit import log_write
+
 
 def _sanitize_value(value: Any) -> Any:
     """Sanitize a single value for Excel (convert dicts/lists to JSON strings)."""
@@ -298,6 +301,16 @@ def write_cell_sync(
     col_letter, row_num, _, _ = parse_range(cell)
     col_num = column_to_number(col_letter)
     
+    # Audit log the write operation
+    log_write(
+        tool="write_cell",
+        workbook=workbook_name,
+        sheet=sheet_name,
+        range_str=cell,
+        cells=1,
+        dry_run=dry_run,
+    )
+    
     return {
         "success": True,
         "workbook": workbook_name,
@@ -498,5 +511,15 @@ def write_range_sync(
                 f"{verification['mismatch_count']} rows had verification warnings. "
                 "Review mismatches in verification.mismatches."
             )
+    
+    # Audit log the write operation
+    log_write(
+        tool="write_range",
+        workbook=workbook_name,
+        sheet=sheet_name,
+        range_str=adjusted_range,
+        cells=rows_to_write * cols_to_write,
+        dry_run=dry_run,
+    )
     
     return result

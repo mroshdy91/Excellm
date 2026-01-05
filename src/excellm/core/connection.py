@@ -28,6 +28,61 @@ def _init_com() -> None:
         _thread_local._com_initialized = True
 
 
+def _uninit_com() -> None:
+    """Uninitialize COM for the current thread.
+    
+    Call this to properly release COM resources when done.
+    This is especially important for worker threads.
+    """
+    if getattr(_thread_local, '_com_initialized', False):
+        try:
+            # Clear cached Excel app reference
+            _thread_local.excel_app = None
+            pythoncom.CoUninitialize()
+        except Exception:
+            pass  # COM might already be uninitialized
+        _thread_local._com_initialized = False
+
+
+class COMContext:
+    """Context manager for deterministic COM lifecycle management.
+    
+    Usage:
+        with COMContext():
+            app = get_excel_app()
+            # ... do COM operations
+        # COM is properly cleaned up here (for worker threads)
+    
+    Main thread keeps COM alive for performance; worker threads clean up.
+    """
+    
+    def __init__(self, force_cleanup: bool = False):
+        """Initialize context.
+        
+        Args:
+            force_cleanup: If True, always uninitialize COM on exit.
+                          If False (default), only uninit for worker threads.
+        """
+        self._force_cleanup = force_cleanup
+        self._was_initialized = False
+    
+    def __enter__(self):
+        self._was_initialized = getattr(_thread_local, '_com_initialized', False)
+        _init_com()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # Only uninit if:
+        # 1. force_cleanup is True, OR
+        # 2. This is a worker thread (not main) AND we initialized COM
+        is_main = threading.current_thread() is threading.main_thread()
+        
+        if self._force_cleanup or (not is_main and not self._was_initialized):
+            _uninit_com()
+        
+        return False  # Don't suppress exceptions
+
+
 def get_excel_app():
     """Get or create Excel Application COM object for current thread.
     

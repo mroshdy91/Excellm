@@ -92,6 +92,7 @@ def read_range_sync(
     workbook_name: str,
     sheet_name: str,
     range_str: Optional[str] = None,
+    max_rows: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Read a range of cells.
     
@@ -99,9 +100,13 @@ def read_range_sync(
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         range_str: Range reference (e.g., "A1:C5"). Defaults to UsedRange.
+        max_rows: Maximum rows to return (prevents token explosion). None = unlimited.
         
     Returns:
-        Dictionary with range data and metadata
+        Dictionary with range data and metadata. If truncated, includes:
+        - truncated: True
+        - total_available: actual row count before truncation
+        - hint: suggestion to narrow range
     """
     _init_com()
     
@@ -185,6 +190,16 @@ def read_range_sync(
     rows = len(data)
     cols = len(data[0]) if data else 0
     
+    # Pagination: apply max_rows limit if specified
+    truncated = False
+    total_available = rows
+    if max_rows and rows > max_rows:
+        data = data[:max_rows]
+        error_codes = error_codes[:max_rows]
+        error_messages = error_messages[:max_rows]
+        truncated = True
+        rows = max_rows
+    
     result = {
         "success": True,
         "workbook": workbook_name,
@@ -198,6 +213,12 @@ def read_range_sync(
         "end_row": rng.Row + rows - 1,
         "end_col": rng.Column + cols - 1,
     }
+    
+    # Add truncation info if data was limited
+    if truncated:
+        result["truncated"] = True
+        result["total_available"] = total_available
+        result["hint"] = f"Returned {max_rows} of {total_available} rows. Narrow range or use offset."
     
     # Get formulas
     try:

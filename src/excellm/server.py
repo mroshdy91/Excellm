@@ -13,7 +13,7 @@ from typing import Any, List, Optional, Dict
 from mcp.server.fastmcp import FastMCP
 
 # Import from refactored modules
-from .core.errors import ToolError
+from .core.errors import ToolError, ErrorCodes
 from .tools import (
     # Readers
     read_cell_sync,
@@ -213,6 +213,7 @@ async def read(
     sheet_name: str = None,
     reference: str = None,
     batch: List[dict] = None,
+    max_rows: int = None,
 ) -> dict:
     """Read from a cell, range, or multiple ranges in Excel.
 
@@ -222,6 +223,7 @@ async def read(
         reference: Cell (A1), range (A1:C5). Defaults to UsedRange.
         batch: Optional list of read requests: [{"sheet": "S1", "range": "A1"}, ...]
                If provided, sheet_name and reference are ignored.
+        max_rows: Maximum rows to return (prevents token explosion). None = unlimited.
 
     Returns:
         Dictionary with cell/range data and metadata
@@ -233,9 +235,10 @@ async def read(
         if not sheet_name:
             raise ToolError("sheet_name is required when batch is not used")
 
-        # Use the session manager for standard reads
-        session = get_session_manager()
-        result = await session.read(workbook_name, sheet_name, reference)
+        # Use read_range_sync with max_rows support
+        result = await asyncio.to_thread(
+            read_range_sync, workbook_name, sheet_name, reference, max_rows
+        )
         return result
     except Exception as e:
         if isinstance(e, ToolError):
@@ -325,6 +328,7 @@ async def search(
     range: str = None,
     has_header: bool = True,
     all_sheets: bool = False,
+    max_rows: int = None,
 ) -> dict:
     """Search and filter Excel data before returning to LLM.
 
@@ -335,13 +339,14 @@ async def search(
         range: Excel range (defaults to UsedRange)
         has_header: Whether first row contains headers
         all_sheets: If True, search all sheets
+        max_rows: Maximum rows to return (prevents token explosion). None = unlimited.
 
     Returns:
         Dictionary with filtered data and metadata
     """
     try:
         result = await asyncio.to_thread(
-            search_sync, workbook_name, filters, sheet_name, range, has_header, all_sheets
+            search_sync, workbook_name, filters, sheet_name, range, has_header, all_sheets, max_rows
         )
         return result
     except Exception as e:
@@ -969,6 +974,9 @@ async def execute_vba(
     ⚠️ USE WITH CAUTION: VBA code runs directly in Excel and can modify workbook state.
     Only use when standard tools are insufficient.
     
+    🔒 SECURITY: This tool is DISABLED by default.
+    Set environment variable EXCELLM_ENABLE_VBA=true to enable.
+    
     Creates a temporary module, executes your VBA code, and cleans up automatically.
     MsgBox statements are removed to prevent blocking popups.
     
@@ -1001,6 +1009,16 @@ async def execute_vba(
         ... ws.Range("A1").Interior.Color = RGB(255, 255, 0)
         ... ''')
     """
+    # Security gate: VBA execution must be explicitly enabled
+    from .config import VBA_ENABLED
+    if not VBA_ENABLED:
+        raise ToolError(
+            "VBA execution is DISABLED by default for security. "
+            "VBA code runs with full Excel/COM privileges. "
+            "To enable, set environment variable: EXCELLM_ENABLE_VBA=true",
+            code=ErrorCodes.VBA_DISABLED
+        )
+    
     try:
         result = await asyncio.to_thread(
             execute_vba_sync,

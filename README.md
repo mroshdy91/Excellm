@@ -9,7 +9,7 @@ A Model Context Protocol (MCP) server for Excel automation with dual-engine supp
 - ✅ **Real-Time Excel Operations**: Work with files open in Excel (Windows)
 - ✅ **Cross-Platform File Mode**: Work with .xlsx files on Windows, Mac, Linux
 - ✅ **Charts & Pivot Tables**: Native Excel chart and pivot table creation
-- ✅ **VBA Execution**: Execute custom macros (Windows only)
+- ✅ **VBA Execution**: Execute custom macros (Windows only, disabled by default)
 - ✅ **Screen Capture**: Visual verification of changes (Windows only)
 - ✅ **Excel Tables**: Create, list, delete table objects
 - ✅ **Cell Merging**: Merge, unmerge, and query merged cells
@@ -145,14 +145,16 @@ Sheet-level analysis. Detects used range, labeled regions, and layout.
 List all open workbooks and their sheets.
 **Usage:** `await list_open_workbooks()`
 
-#### 4. `read(workbook_name, sheet_name, reference, batch)`
+#### 4. `read(workbook_name, sheet_name, reference, batch, max_rows)`
 Read cells or ranges. Supports single range OR efficient batch reading.
 **Usage:** `await read("data.xlsx", "Sheet1", "A1:D10")`
 **Batch:** `await read("data.xlsx", batch=[{"sheet": "S1", "range": "A1"}, {"range": "B2"}])`
+**Pagination:** `await read("data.xlsx", "Sheet1", max_rows=100)` — limits rows to prevent token explosion
 
-#### 5. `search(workbook_name, filters, ...)`
+#### 5. `search(workbook_name, filters, ..., max_rows)`
 Filter data server-side before returning to LLM.
 **Usage:** `await search("data.xlsx", {"Column": "Status", "Value": "Active"})`
+**Pagination:** `await search("data.xlsx", "active", max_rows=50)` — limits matching rows
 
 #### 6. `get_unique_values(workbook_name, sheet_name, range)`
 Get unique values and counts from a column.
@@ -279,6 +281,9 @@ Create pivot tables with aggregation.
 
 #### 27. `execute_vba(workbook_name, vba_code)`
 Run custom VBA macros (Windows only).
+
+**🔒 Security:** Disabled by default. Set `EXCELLM_ENABLE_VBA=true` to enable.
+
 **Usage:** `await execute_vba("data.xlsx", "Range('A1').Value = 'VBA'")`
 
 #### 28. `capture_sheet(workbook_name, sheet_name, range_ref)`
@@ -313,12 +318,10 @@ Check progress of a session.
 
 #### 34. `create_parallel_sessions(...)`
 Split work for parallel sub-agents.
-**Usage:** `await create_parallel_sessions("data.xlsx", "Sheet1", "A", "B")`  "success": true,
-  "total_matches": 15,
-  "total_replacements": 15,
-  "results": [{"sheet": "Sheet1", "matches_found": 15, "replacements_made": 15}]
-}
-```
+**Usage:** `await create_parallel_sessions("data.xlsx", "Sheet1", "A", "B")`
+
+---
+
 
 **Example Usage:**
 ```
@@ -583,11 +586,14 @@ await read(workbook_name="report.xlsx", ...)
 - `inspect_workbook()` - Fast workbook overview
 - `explore()` - Sheet-level analysis (quick/deep modes)
 
-### 📖 Read Operations
-- `read()` - Read cells/ranges with filtering
-- `search()` - Find and filter data
+### 📖 Read Operations & Navigation
+- `list_open_workbooks()` - List all open workbooks
+- `read()` - Read cells/ranges with filtering and pagination
+- `search()` - Find and filter data with pagination
 - `get_unique_values()` - Extract unique values
 - `get_current_selection()` - Get active cell
+- `select_range()` - Visually select a range
+- `get_recent_changes()` - Get Undo/Redo history
 
 ### ✍️ Write Operations
 - `write()` - Write with safety guardrails
@@ -595,23 +601,30 @@ await read(workbook_name="report.xlsx", ...)
 - `sort_range()` - Multi-column sorting
 - `find_replace()` - Find and replace with preview
 
-### 🎨 Formatting
+### 🎨 Formatting & Cells
 - `format()` - Apply predefined or custom formats
 - `get_format()` - Read formatting details
+- `merge_cells()` - Merge a range of cells
+- `unmerge_cells()` - Unmerge a range of cells
+- `get_merged_cells()` - List all merged cell ranges
 
 ### 📋 Sheet Management
 - `manage_sheet()` - Add, remove, hide, copy, rename
 - `insert()` - Insert rows/columns
 - `delete()` - Delete rows/columns
 
-### 📊 Tables
+### 📊 Tables & Charts
 - `create_table()` - Create Excel table objects
 - `list_tables()` - List all tables
 - `delete_table()` - Remove tables
+- `create_chart()` - Create native charts
+- `create_pivot_table()` - Create interactive pivot tables
 
-### ⚙️ Advanced Operations (Use with Caution)
+### ⚙️ Advanced & Utilities
 - `execute_vba()` - Execute VBA macros (Windows only)
 - `capture_sheet()` - Screenshot capture (Windows only)
+- `validate_cell_reference()` - Check reference syntax
+- `validate_formula()` - Validate formula syntax
 
 ### 🎯 Session Management (For Large Datasets)
 - `create_transform_session()` - Start stateful processing
@@ -652,6 +665,29 @@ await read(workbook_name="report.xlsx", ...)
 ❌ DON'T: Trust formatting changes blindly
 ✅ DO: Use capture_sheet() to verify complex formatting
 ```
+
+### 6. Use Pagination for Large Reads
+```
+❌ DON'T: Read 10,000 rows without limits
+✅ DO: Use max_rows parameter to limit token usage
+     await read("data.xlsx", "Sheet1", max_rows=100)
+```
+
+## Audit Logging
+
+All write operations are logged for debugging and accountability:
+
+```
+2026-01-05 11:40:00 | WRITE | write_range | data.xlsx | Sheet1 | A1:D10 | 40 cells
+2026-01-05 11:40:01 | DRY_RUN | write_cell | data.xlsx | Sheet1 | A1 | 1 cells
+```
+
+Logs are written to stderr and include:
+- Timestamp
+- Operation type (WRITE or DRY_RUN)
+- Tool name
+- Workbook, sheet, and range
+- Number of cells affected
 
 
 ## Troubleshooting
@@ -719,7 +755,7 @@ ExceLLM/
 ├── src/
 │   └── excellm/
 │       ├── __init__.py           # Package init
-│       ├── server.py              # Main MCP server with 27 tools
+│       ├── server.py              # Main MCP server with 34 tools
 │       ├── excel_session.py       # Excel COM session manager
 │       ├── validators.py          # Input validation utilities
 │       ├── filters.py             # Filter engine for search
@@ -833,6 +869,25 @@ mypy src/
 - Read/write operations limited to opened workbooks
 - Cell validation prevents malicious input
 
+### VBA Execution Security
+
+**VBA is disabled by default** for security. VBA code runs with full Excel/COM privileges and can:
+- Modify files on disk
+- Access system resources
+- Execute arbitrary code
+
+To enable VBA execution:
+
+```bash
+# Environment variable
+set EXCELLM_ENABLE_VBA=true
+
+# Or in .env file
+EXCELLM_ENABLE_VBA=true
+```
+
+> ⚠️ **Warning:** Only enable VBA in trusted environments where you control the input.
+
 ## Contributing
 
 Contributions are welcome! Please:
@@ -865,6 +920,6 @@ For issues, questions, or contributions:
 
 ### 1.0.0-alpha (2026-01-04)
 - Initial alpha release
-- 33 MCP tools for Excel automation
+- 34 MCP tools for Excel automation
 - Dual-engine architecture (COM + File-based)
 - Cross-platform support (Windows, Mac, Linux)

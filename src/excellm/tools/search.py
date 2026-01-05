@@ -25,6 +25,7 @@ def search_sync(
     range_str: Optional[str] = None,
     has_header: bool = True,
     all_sheets: bool = False,
+    max_rows: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Search and filter Excel data.
     
@@ -35,6 +36,7 @@ def search_sync(
         range_str: Range to search (defaults to UsedRange)
         has_header: If True, first row contains headers
         all_sheets: If True, search all sheets
+        max_rows: Maximum rows to return (prevents token explosion)
         
     Returns:
         Dictionary with filtered data and metadata
@@ -57,7 +59,7 @@ def search_sync(
             
             try:
                 result = _search_sheet(
-                    ws, filters, range_str, has_header, workbook_name
+                    ws, filters, range_str, has_header, workbook_name, max_rows
                 )
                 if result.get("rows_filtered", 0) > 0:
                     all_results.append({
@@ -86,7 +88,7 @@ def search_sync(
         
         worksheet = get_worksheet(workbook, sheet_name)
         result = _search_sheet(
-            worksheet, filters, range_str, has_header, workbook_name
+            worksheet, filters, range_str, has_header, workbook_name, max_rows
         )
         result["sheet"] = sheet_name
         return result
@@ -98,6 +100,7 @@ def _search_sheet(
     range_str: Optional[str],
     has_header: bool,
     workbook_name: str,
+    max_rows: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Search a single worksheet."""
     
@@ -164,6 +167,15 @@ def _search_sheet(
     rows_filtered = len(filtered_data)
     rows_removed = len(data_rows) - rows_filtered
     
+    # Pagination: apply max_rows limit
+    truncated = False
+    total_available = rows_filtered
+    if max_rows and rows_filtered > max_rows:
+        filtered_data = filtered_data[:max_rows]
+        cell_locations = cell_locations[:max_rows]
+        rows_filtered = max_rows
+        truncated = True
+    
     # Get warnings from engine
     warnings = engine.get_warnings() if hasattr(engine, 'get_warnings') else []
     
@@ -181,6 +193,12 @@ def _search_sheet(
     
     if warnings:
         result["warnings"] = warnings
+    
+    # Add truncation info if data was limited
+    if truncated:
+        result["truncated"] = True
+        result["total_available"] = total_available
+        result["hint"] = f"Returned {max_rows} of {total_available} matching rows."
     
     # Human-readable filter description
     if isinstance(filters, str):
