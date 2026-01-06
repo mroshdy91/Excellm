@@ -942,7 +942,7 @@ def _build_read_hints(
     """Build read hints for quick mode.
 
     Args:
-        regions: Detected regions  
+        regions: Detected regions
         outliers: Detected outliers
         start_row, start_col, end_row, end_col: Primary data bounds
 

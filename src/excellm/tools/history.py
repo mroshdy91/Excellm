@@ -52,7 +52,7 @@ def get_recent_changes_sync(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
                 # ListCount access check
                 try:
                     count = control.ListCount
-                except:
+                except Exception:
                     return []
 
                 num_items = min(limit, count)
@@ -70,10 +70,10 @@ def get_recent_changes_sync(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
                             "description": desc,
                             "probable_address": probable_address
                         })
-                    except:
+                    except Exception:
                         continue
                 return items
-            except:
+            except Exception:
                 return []
 
         return {

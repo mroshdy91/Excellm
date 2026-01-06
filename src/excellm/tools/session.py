@@ -174,7 +174,7 @@ def create_parallel_sessions_sync(
     """Create multiple parallel sessions for faster processing of large datasets.
 
     Use when:
-    - Dataset is large (>500 rows) 
+    - Dataset is large (>500 rows)
     - You want to spawn multiple subagents to process in parallel
     - Each subagent handles a different row range independently
 
@@ -384,7 +384,7 @@ def process_chunk_sync(
         )
 
     # Write the data
-    result = write_range_sync(
+    write_range_sync(
         workbook_name=session["workbook_name"],
         sheet_name=session["sheet_name"],
         range_str=write_range,

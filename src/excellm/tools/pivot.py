@@ -398,10 +398,10 @@ def create_pivot_table_openpyxl(
     """Create a pivot table in an Excel file using openpyxl (file-based).
 
     LIMITATION: openpyxl can create the pivot table definition, but Excel
-    performs the actual calculation when the file is opened. This means the 
+    performs the actual calculation when the file is opened. This means the
     data won't be visible/calculated until opened in Excel.
 
-    For immediate results without Excel, we can generate a "Summary Table" 
+    For immediate results without Excel, we can generate a "Summary Table"
     instead (static values calculated in Python).
 
     Args:
@@ -419,7 +419,7 @@ def create_pivot_table_openpyxl(
     """
     try:
         from openpyxl import load_workbook
-        from openpyxl.utils import get_column_letter, range_boundaries
+        from openpyxl.utils import range_boundaries
     except ImportError:
         return {
             "success": False,
@@ -551,12 +551,18 @@ def create_pivot_table_openpyxl(
 
         # Helper for aggregation
         def calc_agg(vals, func):
-            if not vals: return 0
-            if func == "sum": return sum(vals)
-            if func == "count": return len(vals)
-            if func == "average": return sum(vals) / len(vals)
-            if func == "max": return max(vals)
-            if func == "min": return min(vals)
+            if not vals:
+                return 0
+            if func == "sum":
+                return sum(vals)
+            if func == "count":
+                return len(vals)
+            if func == "average":
+                return sum(vals) / len(vals)
+            if func == "max":
+                return max(vals)
+            if func == "min":
+                return min(vals)
             return 0
 
         # Write Data

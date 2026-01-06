@@ -51,7 +51,7 @@ def create_table_sync(
         range_ref: Range for the table (e.g., "A1:D100")
         table_name: Name for the table (must be unique in workbook)
         has_headers: Whether first row contains headers (default: True)
-        table_style: Style name - use shortcuts like "medium2" or full name 
+        table_style: Style name - use shortcuts like "medium2" or full name
                     like "TableStyleMedium2" (default: "medium2")
 
     Returns:

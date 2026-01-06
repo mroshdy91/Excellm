@@ -8,8 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 try:
     import openpyxl
-    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-    from openpyxl.utils import column_index_from_string, get_column_letter
+    from openpyxl.utils import column_index_from_string
     OPENPYXL_AVAILABLE = True
 except ImportError:
     OPENPYXL_AVAILABLE = False
@@ -215,7 +214,7 @@ class FileEngine(ExcelEngine):
             cells_written = 0
             for row_idx, row_data in enumerate(data):
                 for col_idx, value in enumerate(row_data):
-                    cell = ws.cell(
+                    ws.cell(
                         row=start_row + row_idx,
                         column=start_col + col_idx,
                         value=value

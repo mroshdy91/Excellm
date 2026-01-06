@@ -256,7 +256,7 @@ async def write(
 ) -> dict:
     """Write to a cell or range in Excel.
 
-    **Best Practice:** For large datasets (>100 cells), use a subagent with 
+    **Best Practice:** For large datasets (>100 cells), use a subagent with
     a focused context containing only the current chunk's source data.
     This prevents hallucination from context window pressure.
     Consider using create_transform_session for stateful, chunk-based processing.
@@ -642,7 +642,7 @@ async def sort_range(
         Dictionary with operation result
 
     Example:
-        >>> sort_range("data.xlsx", "Sheet1", "A1:D100", 
+        >>> sort_range("data.xlsx", "Sheet1", "A1:D100",
         ...            [{"column": "B", "order": "asc"}, {"column": "C", "order": "desc"}])
         {"success": True, "rows_sorted": 99, ...}
     """
@@ -1065,7 +1065,7 @@ async def capture_sheet(
         >>> capture_sheet("data.xlsx", "Sheet1")
 
         >>> # Capture specific range to file
-        >>> capture_sheet("data.xlsx", "Sheet1", 
+        >>> capture_sheet("data.xlsx", "Sheet1",
         ...               range_ref="A1:H20",
         ...               output_format="file",
         ...               output_path="C:/temp/screenshot.png")

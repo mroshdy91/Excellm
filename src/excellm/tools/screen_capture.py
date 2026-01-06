@@ -125,7 +125,7 @@ def capture_sheet_sync(
                 # Get from clipboard
                 win32clipboard.OpenClipboard()
                 try:
-                    data = win32clipboard.GetClipboardData(win32clipboard.CF_DIB)
+                    win32clipboard.GetClipboardData(win32clipboard.CF_DIB)
                     # Convert DIB to image
                     # This is simplified - in practice you might need more complex handling
                 except Exception:

@@ -15,11 +15,6 @@ import win32com.client as win32
 class ToolError(Exception):
     """Exception raised for tool-related errors."""
 
-
-# Initialize COM for this module
-pythoncom.CoInitialize()
-
-
 from .filters import FilterEngine
 from .validators import (
     get_cell_type,
@@ -32,6 +27,9 @@ from .validators import (
     validate_value_type,
     validate_workbook_name,
 )
+
+# Initialize COM for this module
+pythoncom.CoInitialize()
 
 logger = logging.getLogger(__name__)
 
@@ -142,7 +140,7 @@ class ExcelSessionManager:
         import json
         try:
             return json.dumps(value)
-        except:
+        except Exception:
             return str(value)
 
     def _sanitize_data(self, data: Any) -> Any:
@@ -178,8 +176,8 @@ class ExcelSessionManager:
         # (Using Activate on workbook might be needed if multiple Excel windows are open)
         try:
             workbook.Activate()
-        except:
-            pass # Ignore if fail
+        except Exception:
+            pass  # Ignore if fail
 
         # Activate worksheet
         worksheet.Activate()
@@ -669,7 +667,7 @@ class ExcelSessionManager:
                     workbook.Activate()
                     worksheet.Activate()
                     worksheet.Range(cell).Select()
-                except:
+                except Exception:
                     pass
 
         # Parse coordinates for output
@@ -791,10 +789,9 @@ class ExcelSessionManager:
         adjusted_range = f"{final_start_col}{final_start_row}:{adjusted_end_col}{adjusted_end_row}"
 
         # Trim data if it's larger than the range
-        write_data = data
         data_was_trimmed = False
         if actual_rows > rows_to_write or actual_cols > cols_to_write:
-            write_data = [row[:cols_to_write] for row in data[:rows_to_write]]
+            [row[:cols_to_write] for row in data[:rows_to_write]]
             data_was_trimmed = True
 
         # Check if range was adjusted (data smaller than range)
@@ -985,7 +982,7 @@ class ExcelSessionManager:
                     workbook.Activate()
                     worksheet.Activate()
                     worksheet.Range(range_str).Select()
-                except:
+                except Exception:
                     pass
 
         rows_written = len(data)
@@ -1258,9 +1255,9 @@ class ExcelSessionManager:
                 headers = []
                 if has_header and data:
                     headers = data[0]
-                    content_rows = data[1:]
+                    data[1:]
                 else:
-                    content_rows = data
+                    pass
 
                 # Parse filters using existing FilterEngine
                 engine = FilterEngine()
@@ -2517,7 +2514,7 @@ class ExcelSessionManager:
                 workbook.Activate()
                 worksheet.Activate()
                 rng.Select()
-            except:
+            except Exception:
                 pass
 
         return {
@@ -2576,7 +2573,7 @@ class ExcelSessionManager:
     ) -> Dict[str, Any]:
         """Synchronous format retrieval."""
         pythoncom.CoInitialize()
-        app = win32.GetActiveObject("Excel.Application")
+        win32.GetActiveObject("Excel.Application")
         # Check if reference contains commas (multiple references)
         if "," in reference:
             refs = parse_reference_string(reference)
