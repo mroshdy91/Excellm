@@ -17,7 +17,7 @@ def capture_sheet_sync(
     workbook_name: str,
     sheet_name: str,
     range_ref: str = None,
-    output_format: str = "base64",
+    output_format: str = "file",
     output_path: str = None,
 ) -> dict:
     """Capture screenshot of Excel sheet or range.

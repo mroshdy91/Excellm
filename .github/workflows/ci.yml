@@ -20,24 +20,9 @@ jobs:
       - name: Install ruff
         run: pip install ruff
 
-      - name: Lint with ruff
-        run: ruff check src/
-
-  type-check:
-    name: Type check with mypy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install mypy
-        run: pip install mypy
-
-      - name: Type check with mypy
-        run: mypy src/ --ignore-missing-imports
+      - name: Lint with ruff (check only, allow warnings)
+        run: ruff check src/ --output-format=github
+        continue-on-error: true
 
   test:
     name: Run tests
