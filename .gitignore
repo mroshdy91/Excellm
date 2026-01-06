@@ -87,7 +87,6 @@ yarn-error.log*
 dmypy.json
 
 # Development/Test files
-tests/
 test_*.xlsx
 *_test.xlsx
 test_results.txt
