@@ -1,6 +1,6 @@
 [project]
 name = "excellm"
- version = "1.1.1"
+ version = "1.2.0"
  description = "ExceLLM - MCP server for Excel live automation with LLM safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"
