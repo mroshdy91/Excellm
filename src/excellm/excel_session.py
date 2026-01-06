@@ -161,7 +161,7 @@ class ExcelSessionManager:
         self, workbook_name: str, sheet_name: str, reference: str
     ) -> Dict[str, Any]:
         """Activate a workbook, worksheet, and select a range.
-        
+
         This moves the focus in the Excel UI to the specified location.
         """
         await self._connect()

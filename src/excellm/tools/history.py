@@ -13,10 +13,10 @@ ID_REDO = 129
 
 def get_recent_changes_sync(limit: int = 10) -> Dict[str, List[Dict[str, Any]]]:
     """Retrieve items from Excel's Undo and Redo stacks.
-    
+
     Args:
         limit: Max number of items to retrieve per stack
-        
+
     Returns:
         Dict with keys 'undo' and 'redo', each containing list of history items
     """

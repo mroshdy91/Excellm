@@ -177,14 +177,14 @@ async def select_range(
     workbook_name: str, sheet_name: str, reference: str
 ) -> dict:
     """Activate a workbook, worksheet, and select a range.
-    
+
     This moves the focus in the Excel UI to the specified location.
-    
+
     Args:
         workbook_name: Name of open workbook (e.g., "data.xlsx")
         sheet_name: Name of worksheet (e.g., "Sheet1")
         reference: Cell or range reference (e.g., "A1", "B2:D10")
-    
+
     Returns:
         Dictionary with success status and message
     """
@@ -703,13 +703,13 @@ async def find_replace(
 async def get_recent_changes(limit: int = 10) -> Dict[str, Any]:
     """
     Get the history of recent user actions from the Undo and Redo stacks.
-    
+
     This tool allows the LLM to "see" what the user has recently done in Excel,
     or what they have undone. It retrieves descriptive action strings (e.g., "Typing 's' in A1").
-    
+
     Args:
         limit: Max number of items to retrieve per stack (default: 10)
-        
+
     Returns:
         Dictionary with:
         - success: True
@@ -818,7 +818,7 @@ async def create_transform_session(
     verify_key_index: int = 0,
 ) -> dict:
     """Create a stateful transformation session for processing data in chunks.
-    
+
     **Best Practice:** Use this for datasets > 25 rows. The server tracks progress
     so LLMs don't need to maintain state. Ideal for subagent-based processing
     where each chunk is handled by a focused subagent.
@@ -862,7 +862,7 @@ async def create_parallel_sessions(
     verify_key_index: int = 0,
 ) -> dict:
     """Create multiple parallel sessions for faster processing of large datasets.
-    
+
     Use when:
     - Dataset is large (>500 rows)
     - You want to spawn multiple subagents to process in parallel
@@ -901,7 +901,7 @@ async def process_chunk(
     data: list,
 ) -> dict:
     """Process a chunk of transformed data in an active session.
-    
+
     Server knows which rows to write based on session state.
     Automatically verifies data against source column (zero tolerance).
     Returns next chunk's source data for continued processing.
@@ -927,7 +927,7 @@ async def process_chunk(
 @mcp.tool()
 async def get_session_status(session_id: str) -> dict:
     """Get the status of an existing transformation session.
-    
+
     Use to check progress, resume after interruption, or review errors.
 
     Args:
@@ -962,20 +962,20 @@ async def execute_vba(
     timeout: int = 30,
 ) -> dict:
     """⚙️ ADVANCED OPERATION: Execute custom VBA code in Excel.
-    
+
     ⚠️ USE WITH CAUTION: VBA code runs directly in Excel and can modify workbook state.
     Only use when standard tools are insufficient.
-    
+
     🔒 SECURITY: This tool is DISABLED by default.
     Set environment variable EXCELLM_ENABLE_VBA=true to enable.
-    
+
     Creates a temporary module, executes your VBA code, and cleans up automatically.
     MsgBox statements are removed to prevent blocking popups.
-    
+
     💡 RECOMMENDED WORKFLOW:
     1. Try standard tools first (read, write, format, etc.)
     2. If operation is too complex, use this as fallback
-    
+
     Args:
         workbook_name: Name of open workbook
         vba_code: VBA code to execute (can be raw statements or full Sub)
@@ -983,7 +983,7 @@ async def execute_vba(
         procedure_name: Name for the procedure (default: "Main")
         sheet_name: Optional sheet to activate before execution
         timeout: Execution timeout in seconds (default: 30)
-        
+
     Returns:
         Dictionary with execution result:
         {
@@ -992,7 +992,7 @@ async def execute_vba(
             "procedure_name": "Main",
             "module_name": "TempModule1234"
         }
-        
+
     Example:
         >>> execute_vba("data.xlsx", '''
         ... Dim ws As Worksheet
@@ -1037,17 +1037,17 @@ async def capture_sheet(
     output_path: str = None,
 ) -> dict:
     """📸 Capture screenshot of Excel sheet or range.
-    
+
     Captures the visual representation including formatting, colors, borders, etc.
     Useful for validation, documentation, and visual verification of changes.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         range_ref: Specific range to capture (None = entire UsedRange)
         output_format: "base64" (default) or "file"
         output_path: File path if output_format is "file"
-        
+
     Returns:
         Dictionary with:
         {
@@ -1059,11 +1059,11 @@ async def capture_sheet(
             "range_captured": "A1:H20",
             "sheet_name": "Sheet1"
         }
-        
+
     Example:
         >>> # Capture entire sheet as base64
         >>> capture_sheet("data.xlsx", "Sheet1")
-        
+
         >>> # Capture specific range to file
         >>> capture_sheet("data.xlsx", "Sheet1", 
         ...               range_ref="A1:H20",
@@ -1096,13 +1096,13 @@ async def create_table(
     table_style: str = "medium2",
 ) -> dict:
     """📊 Create an Excel Table (ListObject) from a range.
-    
+
     Excel Tables provide:
     - Automatic formatting and banding
     - Built-in filtering (dropdown arrows)
     - Structured references in formulas
     - Easy expansion when adding data
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -1111,7 +1111,7 @@ async def create_table(
         has_headers: Whether first row contains headers (default: True)
         table_style: Style name - shortcuts: "light1", "medium2", "dark1"
                     or full names like "TableStyleMedium9" (default: "medium2")
-        
+
     Returns:
         Dictionary with:
         {
@@ -1124,7 +1124,7 @@ async def create_table(
             "style": "TableStyleMedium2",
             "headers": ["Name", "Date", "Amount", "Status"]
         }
-        
+
     Example:
         >>> create_table("data.xlsx", "Sheet1", "A1:D100",
         ...              "SalesData", table_style="medium9")
@@ -1152,11 +1152,11 @@ async def list_tables(
     sheet_name: str = None,
 ) -> dict:
     """📋 List all Excel Tables in a workbook or sheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Optional - specific sheet (None = all sheets)
-        
+
     Returns:
         Dictionary with list of tables and their properties
     """
@@ -1181,13 +1181,13 @@ async def delete_table(
     keep_data: bool = True,
 ) -> dict:
     """🗑️ Delete an Excel Table, optionally keeping the data.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         table_name: Name of table to delete
         keep_data: If True, convert to normal range; if False, delete data too
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -1226,7 +1226,7 @@ async def create_chart(
     style: dict = None,
 ) -> dict:
     """📊 Create a chart in an Excel worksheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -1239,7 +1239,7 @@ async def create_chart(
         width: Chart width in points
         height: Chart height in points
         style: Optional style configuration
-        
+
     Returns:
         Dictionary with chart details
     """
@@ -1270,7 +1270,7 @@ async def create_pivot_table(
     table_name: str = None,
 ) -> dict:
     """📊 Create a pivot table from source data.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet with source data
@@ -1282,7 +1282,7 @@ async def create_pivot_table(
         target_sheet: Sheet for pivot table (default: creates new sheet)
         target_cell: Cell for pivot table location
         table_name: Optional name for the pivot table
-        
+
     Returns:
         Dictionary with pivot table details
     """
@@ -1307,13 +1307,13 @@ async def merge_cells(
     end_cell: str,
 ) -> dict:
     """Merge a range of cells.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         start_cell: Starting cell (e.g., "A1")
         end_cell: Ending cell (e.g., "D1")
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -1336,13 +1336,13 @@ async def unmerge_cells(
     end_cell: str,
 ) -> dict:
     """Unmerge a previously merged range of cells.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         start_cell: Starting cell (e.g., "A1")
         end_cell: Ending cell (e.g., "D1")
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -1363,11 +1363,11 @@ async def get_merged_cells(
     sheet_name: str,
 ) -> dict:
     """Get all merged cell ranges in a worksheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
-        
+
     Returns:
         Dictionary with list of merged ranges
     """
@@ -1387,12 +1387,12 @@ async def validate_formula(
     formula: str,
 ) -> dict:
     """Validate Excel formula syntax without applying it.
-    
+
     Checks for balanced parentheses, valid function names, and common errors.
-    
+
     Args:
         formula: Formula string to validate (e.g., "=SUM(A1:A10)")
-        
+
     Returns:
         Dictionary with:
         {

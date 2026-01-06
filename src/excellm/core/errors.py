@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 class ToolError(Exception):
     """Exception raised for tool-related errors.
-    
+
     Attributes:
         message: Error message
         code: Optional error code for categorization
@@ -42,11 +42,11 @@ def create_error_response(
     tool_name: str = "unknown",
 ) -> Dict[str, Any]:
     """Create a standardized error response dictionary.
-    
+
     Args:
         error: The exception that occurred
         tool_name: Name of the tool that failed
-        
+
     Returns:
         Dictionary with success=False and error details
     """

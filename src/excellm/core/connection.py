@@ -30,7 +30,7 @@ def _init_com() -> None:
 
 def _uninit_com() -> None:
     """Uninitialize COM for the current thread.
-    
+
     Call this to properly release COM resources when done.
     This is especially important for worker threads.
     """
@@ -46,19 +46,19 @@ def _uninit_com() -> None:
 
 class COMContext:
     """Context manager for deterministic COM lifecycle management.
-    
+
     Usage:
         with COMContext():
             app = get_excel_app()
             # ... do COM operations
         # COM is properly cleaned up here (for worker threads)
-    
+
     Main thread keeps COM alive for performance; worker threads clean up.
     """
 
     def __init__(self, force_cleanup: bool = False):
         """Initialize context.
-        
+
         Args:
             force_cleanup: If True, always uninitialize COM on exit.
                           If False (default), only uninit for worker threads.
@@ -85,13 +85,13 @@ class COMContext:
 
 def get_excel_app():
     """Get or create Excel Application COM object for current thread.
-    
+
     Uses thread-local storage to cache the connection, avoiding
     repeated COM initialization overhead.
-    
+
     Returns:
         Excel.Application COM object
-        
+
     Raises:
         ToolError: If Excel is not running
     """
@@ -123,14 +123,14 @@ def get_excel_app():
 
 def get_workbook(app, workbook_name: str):
     """Get a workbook by name from the Excel application.
-    
+
     Args:
         app: Excel Application COM object
         workbook_name: Name of the workbook
-        
+
     Returns:
         Workbook COM object
-        
+
     Raises:
         ToolError: If workbook not found
     """
@@ -145,14 +145,14 @@ def get_workbook(app, workbook_name: str):
 
 def get_worksheet(workbook, sheet_name: str):
     """Get a worksheet by name from a workbook.
-    
+
     Args:
         workbook: Workbook COM object
         sheet_name: Name of the worksheet
-        
+
     Returns:
         Worksheet COM object
-        
+
     Raises:
         ToolError: If worksheet not found
     """
@@ -167,10 +167,10 @@ def get_worksheet(workbook, sheet_name: str):
 
 def with_excel_context(func: F) -> F:
     """Decorator that provides Excel app, workbook, and worksheet to a function.
-    
+
     The decorated function should accept workbook_name and sheet_name as the
     first two arguments. The decorator adds kwargs: app, workbook, worksheet.
-    
+
     Usage:
         @with_excel_context
         def my_operation(workbook_name, sheet_name, *, app, workbook, worksheet):
@@ -210,14 +210,14 @@ def batch_read_values(
     range_str: str,
 ) -> List[List[Any]]:
     """Read a range of values in a single COM call.
-    
+
     This is significantly faster than reading cells individually,
     especially for large ranges (O(1) vs O(n) COM calls).
-    
+
     Args:
         worksheet: Worksheet COM object
         range_str: Excel range like "A1:Z100"
-        
+
     Returns:
         2D list of values (list of rows, each row is list of values)
     """
@@ -253,15 +253,15 @@ def batch_read_with_positions(
     end_col: int,
 ) -> Dict[Tuple[int, int], Any]:
     """Read multiple cell positions using a single batch read.
-    
+
     Reads the bounding rectangle and extracts only the requested positions.
     Much faster than individual cell reads.
-    
+
     Args:
         worksheet: Worksheet COM object
         positions: List of (row, col) tuples to read (1-based)
         start_row, start_col, end_row, end_col: Bounding rectangle
-        
+
     Returns:
         Dictionary mapping (row, col) to value
     """
@@ -292,7 +292,7 @@ def batch_read_with_positions(
 
 def ensure_workbook_open() -> None:
     """Verify that at least one workbook is open in Excel.
-    
+
     Raises:
         ToolError: If no workbook is open
     """
@@ -306,10 +306,10 @@ def ensure_workbook_open() -> None:
 
 def get_active_workbook():
     """Get the active workbook in Excel.
-    
+
     Returns:
         Active Workbook COM object
-        
+
     Raises:
         ToolError: If no workbook is open
     """
@@ -328,10 +328,10 @@ def get_active_workbook():
 
 def get_active_sheet():
     """Get the active worksheet in Excel.
-    
+
     Returns:
         Tuple of (Workbook, Worksheet) COM objects
-        
+
     Raises:
         ToolError: If no workbook/sheet is active
     """

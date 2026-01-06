@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def list_workbooks_sync() -> List[Dict[str, Any]]:
     """List all open workbooks with their sheet information.
-    
+
     Returns:
         List of dictionaries containing workbook name and sheets
     """
@@ -74,14 +74,14 @@ def select_range_sync(
     reference: str,
 ) -> Dict[str, Any]:
     """Activate a workbook, worksheet, and select a range.
-    
+
     This moves the focus in the Excel UI to the specified location.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         reference: Cell or range reference
-        
+
     Returns:
         Dictionary with success status and message
     """
@@ -115,10 +115,10 @@ def select_range_sync(
 
 def get_sheet_names_sync(workbook_name: str) -> List[str]:
     """Get sheet names for a workbook.
-    
+
     Args:
         workbook_name: Name of the workbook
-        
+
     Returns:
         List of sheet names
     """
@@ -136,10 +136,10 @@ def get_sheet_names_sync(workbook_name: str) -> List[str]:
 
 def validate_cell_reference_result(cell: str) -> Dict[str, Any]:
     """Validate an Excel cell reference format.
-    
+
     Args:
         cell: Cell reference to validate
-        
+
     Returns:
         Dictionary with validation result
     """

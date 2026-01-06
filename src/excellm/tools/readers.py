@@ -29,12 +29,12 @@ def read_cell_sync(
     cell: str,
 ) -> Dict[str, Any]:
     """Read a single cell value.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         cell: Cell reference (e.g., "A1", "B5")
-        
+
     Returns:
         Dictionary with cell value and metadata
     """
@@ -85,13 +85,13 @@ def read_range_sync(
     max_rows: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Read a range of cells.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         range_str: Range reference (e.g., "A1:C5"). Defaults to UsedRange.
         max_rows: Maximum rows to return (prevents token explosion). None = unlimited.
-        
+
     Returns:
         Dictionary with range data and metadata. If truncated, includes:
         - truncated: True
@@ -258,12 +258,12 @@ def get_unique_values_sync(
     range_str: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Get unique values and their frequencies from an Excel range.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         range_str: Excel range. Defaults to UsedRange if omitted.
-        
+
     Returns:
         Dictionary with unique values and counts
     """
@@ -323,7 +323,7 @@ def get_unique_values_sync(
 
 def get_current_selection_sync() -> Dict[str, Any]:
     """Get information about the current selection in Excel.
-    
+
     Returns:
         Dictionary with selection details
     """
@@ -413,12 +413,12 @@ def batch_read_sync(
     batch: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
     """Execute multiple read requests reusing the COM connection.
-    
+
     Args:
         workbook_name: Default workbook name (can be overridden in batch items)
         batch: List of read requests, e.g.:
                [{"sheet": "Sheet1", "range": "A1"}, {"range": "B2"}]
-               
+
     Returns:
         Dictionary with results list and success status
     """

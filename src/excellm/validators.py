@@ -85,7 +85,7 @@ def validate_sheet_name(name: str) -> bool:
 
 def validate_range_format(range_str: str) -> bool:
     """Validate Excel range format.
-    
+
     Supports:
     - Single cell: A1, F5, Z100
     - Standard range: A1:C5
@@ -638,10 +638,10 @@ VALID_EXCEL_FUNCTIONS = {
 
 def validate_cell_reference(cell: str) -> bool:
     """Validate a cell reference (e.g., A1, $B$5, Sheet1!A1).
-    
+
     Args:
         cell: Cell reference to validate
-        
+
     Returns:
         True if valid cell reference
     """
@@ -665,7 +665,7 @@ def validate_cell_reference(cell: str) -> bool:
 
 def validate_formula_sync(formula: str) -> dict:
     """Validate Excel formula syntax without applying it.
-    
+
     Checks for:
     - Proper formula start (=)
     - Balanced parentheses
@@ -673,10 +673,10 @@ def validate_formula_sync(formula: str) -> dict:
     - Valid cell references
     - Proper string quoting
     - Ambiguous ranges
-    
+
     Args:
         formula: Formula string to validate
-        
+
     Returns:
         Dictionary with validation result:
         {

@@ -45,11 +45,11 @@ XL_CELL_TYPE_CONSTANTS = 2
 
 def explore_sync(sheet: str, mode: str = "quick") -> Dict[str, Any]:
     """Synchronous implementation of explore tool.
-    
+
     Args:
         sheet: Sheet name or "ACTIVE" for active sheet
         mode: "quick" or "deep"
-        
+
     Returns:
         Dictionary matching ExploreResult schema
     """
@@ -121,7 +121,7 @@ def _explore_quick(
     sheet_name: str
 ) -> Dict[str, Any]:
     """Quick mode exploration - fast sampling-based.
-    
+
     Args:
         ws: Worksheet COM object
         app: Application COM object
@@ -129,7 +129,7 @@ def _explore_quick(
         used_range_addr: Normalized address string
         start_row, start_col, end_row, end_col: Range bounds
         sheet_name: Name of sheet
-        
+
     Returns:
         Dictionary with explore results (without meta)
     """
@@ -335,7 +335,7 @@ def _explore_deep(
     sheet_name: str
 ) -> Dict[str, Any]:
     """Deep mode exploration - more thorough analysis.
-    
+
     Args:
         ws: Worksheet COM object
         app: Application COM object
@@ -343,7 +343,7 @@ def _explore_deep(
         used_range_addr: Normalized address string
         start_row, start_col, end_row, end_col: Range bounds
         sheet_name: Name of sheet
-        
+
     Returns:
         Dictionary with explore results (without meta)
     """
@@ -487,11 +487,11 @@ def _find_real_data_bounds(
     ws, start_row: int, start_col: int, end_row: int, end_col: int
 ) -> Tuple[int, int, int, int]:
     """Find actual data bounds by scanning backwards.
-    
+
     Args:
         ws: Worksheet COM object
         start_row, start_col, end_row, end_col: UsedRange bounds
-        
+
     Returns:
         Tuple of (real_start_row, real_start_col, real_end_row, real_end_col)
     """
@@ -579,11 +579,11 @@ def _detect_regions_deep(
     ws, start_row: int, start_col: int, end_row: int, end_col: int
 ) -> List[Region]:
     """Detect multiple regions via blank row runs.
-    
+
     Args:
         ws: Worksheet COM object
         start_row, start_col, end_row, end_col: Data bounds
-        
+
     Returns:
         List of Region objects
     """
@@ -651,12 +651,12 @@ def _detect_outliers_quick(
     data_start_row: int, data_start_col: int, data_end_row: int, data_end_col: int
 ) -> List[Outlier]:
     """Quick outlier detection by checking corners.
-    
+
     Args:
         ws: Worksheet COM object
         start_row, start_col, end_row, end_col: UsedRange bounds
         data_start_row, data_start_col, data_end_row, data_end_col: Primary data bounds
-        
+
     Returns:
         List of Outlier objects
     """
@@ -713,7 +713,7 @@ def _detect_outliers_deep(
     data_start_row: int, data_start_col: int, data_end_row: int, data_end_col: int
 ) -> List[Outlier]:
     """Deep outlier detection with distance calculation.
-    
+
     Similar to quick but with more accurate bounds and distances.
     """
     outliers = []
@@ -776,11 +776,11 @@ def _check_area_for_data(
     ws, start_row: int, start_col: int, end_row: int, end_col: int
 ) -> bool:
     """Check if an area contains any data via sampling.
-    
+
     Args:
         ws: Worksheet COM object
         start_row, start_col, end_row, end_col: Area bounds
-        
+
     Returns:
         True if any data found
     """
@@ -807,12 +807,12 @@ def _check_area_for_data(
 
 def _get_layout_info(ws, used_range, app) -> Layout:
     """Get layout information for a sheet.
-    
+
     Args:
         ws: Worksheet COM object
         used_range: UsedRange COM object
         app: Application COM object
-        
+
     Returns:
         Layout object
     """
@@ -903,11 +903,11 @@ def _get_layout_info(ws, used_range, app) -> Layout:
 
 def _get_comments_info(ws, detailed: bool = False) -> CommentsNotes:
     """Get comments/notes information.
-    
+
     Args:
         ws: Worksheet COM object
         detailed: If True, include range samples
-        
+
     Returns:
         CommentsNotes object
     """
@@ -940,12 +940,12 @@ def _build_read_hints(
     start_row: int, start_col: int, end_row: int, end_col: int
 ) -> ReadHints:
     """Build read hints for quick mode.
-    
+
     Args:
         regions: Detected regions  
         outliers: Detected outliers
         start_row, start_col, end_row, end_col: Primary data bounds
-        
+
     Returns:
         ReadHints object
     """
@@ -991,12 +991,12 @@ def _build_read_hints_deep(
     start_row: int, start_col: int, end_row: int, end_col: int
 ) -> ReadHints:
     """Build read hints for deep mode with region header scans.
-    
+
     Args:
         regions: Detected regions
         outliers: Detected outliers
         start_row, start_col, end_row, end_col: Primary data bounds
-        
+
     Returns:
         ReadHints object with region-specific hints
     """

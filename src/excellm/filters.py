@@ -717,15 +717,15 @@ class FilterEngine:
     ) -> Tuple[List[List[Any]], List[int]]:
         """
         Filter data rows and return filtered data with row indices.
-        
+
         This is a convenience method that returns a tuple instead of a dict,
         suitable for use cases that need both the filtered data and original row indices.
-        
+
         Args:
             data_rows: 2D array of data values (without header row)
             filters: Filter specification (string for simple contains search, dict for complex)
             headers: Optional list of column headers for name-based column references
-            
+
         Returns:
             Tuple of (filtered_data, row_indices) where:
             - filtered_data: List of rows that matched the filter

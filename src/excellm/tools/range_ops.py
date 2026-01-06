@@ -30,7 +30,7 @@ def copy_range_sync(
     include_formatting: bool = True,
 ) -> Dict[str, Any]:
     """Copy range to another location with optional formatting.
-    
+
     Args:
         source_workbook: Name of source workbook
         source_sheet: Name of source worksheet
@@ -39,7 +39,7 @@ def copy_range_sync(
         target_sheet: Name of target worksheet (defaults to source)
         target_cell: Top-left cell of paste destination
         include_formatting: If True, copy formatting along with values
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -112,7 +112,7 @@ def sort_range_sync(
     has_header: bool = True,
 ) -> Dict[str, Any]:
     """Sort data in a range by one or more columns.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -120,7 +120,7 @@ def sort_range_sync(
         sort_by: List of sort specifications:
             [{"column": "B", "order": "asc"}, {"column": "C", "order": "desc"}]
         has_header: If True, first row is treated as header
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -191,7 +191,7 @@ def find_replace_sync(
     preview_only: bool = False,
 ) -> Dict[str, Any]:
     """Find and replace values in a sheet or workbook.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet (None = all sheets)
@@ -201,7 +201,7 @@ def find_replace_sync(
         match_entire_cell: If True, match entire cell content
         range_str: Specific range to search (defaults to UsedRange)
         preview_only: If True, only count matches without replacing
-        
+
     Returns:
         Dictionary with operation result
     """

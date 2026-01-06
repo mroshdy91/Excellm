@@ -160,7 +160,7 @@ def _apply_format(rng, format_props: Dict[str, Any]) -> None:
 
 def _apply_conditional_format(rng, cond_format: Dict[str, Any]) -> None:
     """Apply conditional formatting to a range.
-    
+
     Supports:
     - colorScale: 2 or 3 color gradient based on values
     - dataBar: Data bars showing value proportion
@@ -290,7 +290,7 @@ def format_range_sync(
     activate: bool = True,
 ) -> Dict[str, Any]:
     """Apply formatting to cells/ranges in Excel.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -304,7 +304,7 @@ def format_range_sync(
             - For iconSet: icon_style ('3arrows', '3trafficlights', etc.), reverse
             - For cellIs: operator, value, fill_color, font_color
         activate: If True, activate the range after formatting
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -384,12 +384,12 @@ def get_format_sync(
     reference: str,
 ) -> Dict[str, Any]:
     """Get formatting properties from cells/ranges in Excel.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         reference: Cell/range reference
-        
+
     Returns:
         Dictionary with formatting properties
     """
@@ -528,13 +528,13 @@ def merge_cells_sync(
     end_cell: str,
 ) -> Dict[str, Any]:
     """Merge a range of cells.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         start_cell: Starting cell of range (e.g., "A1")
         end_cell: Ending cell of range (e.g., "D1")
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -577,13 +577,13 @@ def unmerge_cells_sync(
     end_cell: str,
 ) -> Dict[str, Any]:
     """Unmerge a previously merged range of cells.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         start_cell: Starting cell of range (e.g., "A1")
         end_cell: Ending cell of range (e.g., "D1")
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -620,11 +620,11 @@ def get_merged_cells_sync(
     sheet_name: str,
 ) -> Dict[str, Any]:
     """Get all merged cell ranges in a worksheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
-        
+
     Returns:
         Dictionary with list of merged ranges
     """

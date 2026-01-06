@@ -46,11 +46,11 @@ def create_chart_sync(
     style: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Create a chart in an Excel worksheet.
-    
+
     Supports dual-engine operation:
     - COM engine for live Excel (Windows)
     - openpyxl engine for file-based operations
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -63,7 +63,7 @@ def create_chart_sync(
         width: Chart width in points (default 400)
         height: Chart height in points (default 300)
         style: Optional style configuration dict
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -195,7 +195,7 @@ def create_chart_sync(
 
 def _apply_chart_style(chart, style: Dict[str, Any]) -> None:
     """Apply style options to a chart.
-    
+
     Args:
         chart: COM chart object
         style: Style configuration dictionary
@@ -243,11 +243,11 @@ def list_charts_sync(
     sheet_name: str,
 ) -> Dict[str, Any]:
     """List all charts in a worksheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
-        
+
     Returns:
         Dictionary with list of charts
     """
@@ -301,13 +301,13 @@ def delete_chart_sync(
     chart_index: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Delete a chart from a worksheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         chart_name: Name of chart to delete
         chart_index: Index of chart to delete (1-based)
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -370,9 +370,9 @@ def create_chart_openpyxl(
     style: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Create a chart in an Excel file using openpyxl (file-based).
-    
+
     Cross-platform support - no Excel installation required.
-    
+
     Args:
         filepath: Path to the Excel file
         sheet_name: Name of worksheet
@@ -385,7 +385,7 @@ def create_chart_openpyxl(
         width: Chart width in cm (default 15)
         height: Chart height in cm (default 10)
         style: Optional style configuration
-        
+
     Returns:
         Dictionary with operation result
     """

@@ -36,11 +36,11 @@ def create_pivot_table_sync(
     table_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a pivot table from source data.
-    
+
     Supports dual-engine operation:
     - COM engine for live Excel (Windows) - creates native pivot tables
     - openpyxl engine for file-based operations - creates summary tables
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet containing source data
@@ -52,7 +52,7 @@ def create_pivot_table_sync(
         target_sheet: Sheet for pivot table (default: creates new sheet)
         target_cell: Cell for pivot table location (default: "A1")
         table_name: Optional name for the pivot table
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -213,12 +213,12 @@ def refresh_pivot_table_sync(
     table_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Refresh pivot table(s) to update with latest source data.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet containing pivot table
         table_name: Name of specific pivot table (None = refresh all)
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -270,11 +270,11 @@ def list_pivot_tables_sync(
     sheet_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """List all pivot tables in a workbook or specific sheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Optional sheet name (None = all sheets)
-        
+
     Returns:
         Dictionary with list of pivot tables
     """
@@ -325,13 +325,13 @@ def delete_pivot_table_sync(
     keep_data: bool = False,
 ) -> Dict[str, Any]:
     """Delete a pivot table.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         table_name: Name of pivot table to delete
         keep_data: If True, convert to values before deleting
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -396,14 +396,14 @@ def create_pivot_table_openpyxl(
     table_name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Create a pivot table in an Excel file using openpyxl (file-based).
-    
+
     LIMITATION: openpyxl can create the pivot table definition, but Excel
     performs the actual calculation when the file is opened. This means the 
     data won't be visible/calculated until opened in Excel.
-    
+
     For immediate results without Excel, we can generate a "Summary Table" 
     instead (static values calculated in Python).
-    
+
     Args:
         filepath: Path to the Excel file
         sheet_name: Name of worksheet containing source data
@@ -413,7 +413,7 @@ def create_pivot_table_openpyxl(
         columns: Optional fields for column labels
         agg_func: Aggregation function (sum, count, average, max, min)
         target_sheet: Sheet for pivot table
-        
+
     Returns:
         Dictionary with operation result
     """

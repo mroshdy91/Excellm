@@ -15,14 +15,14 @@ from ..core.errors import ErrorCodes, ToolError
 
 def _clean_vba_code(vba_code: str) -> str:
     """Clean and sanitize VBA code for safe execution.
-    
+
     - Removes MsgBox statements (prevent blocking popups)
     - Removes problematic Err.Raise statements
     - Strips inline comments for cleaner execution
-    
+
     Args:
         vba_code: Raw VBA code
-        
+
     Returns:
         Cleaned VBA code
     """
@@ -61,10 +61,10 @@ def _clean_vba_code(vba_code: str) -> str:
 
 def _parse_vba_structure(vba_code: str) -> tuple[bool, Optional[str], str]:
     """Parse VBA code to detect Sub/Function structure.
-    
+
     Args:
         vba_code: VBA code to parse
-        
+
     Returns:
         Tuple of (has_structure, procedure_name, cleaned_code)
     """
@@ -88,7 +88,7 @@ def _generate_unique_module_name() -> str:
 
 def _clean_temp_modules(workbook) -> None:
     """Clean up existing temporary VBA modules.
-    
+
     Args:
         workbook: Workbook COM object
     """
@@ -121,10 +121,10 @@ def execute_vba_sync(
     timeout: int = 30,
 ) -> dict:
     """Execute VBA code in Excel.
-    
+
     Creates a temporary module, adds the VBA code, executes it,
     and cleans up the module afterwards.
-    
+
     Args:
         workbook_name: Name of open workbook
         vba_code: VBA code to execute
@@ -132,7 +132,7 @@ def execute_vba_sync(
         procedure_name: Name for the procedure (default: "Main")
         sheet_name: Optional sheet to activate before execution
         timeout: Execution timeout in seconds (for future use)
-        
+
     Returns:
         Dictionary with execution result:
         {
@@ -141,7 +141,7 @@ def execute_vba_sync(
             "procedure_name": "Main",
             "module_name": "TempModule1234"
         }
-        
+
     Raises:
         ToolError: If VBA execution fails
     """
@@ -201,7 +201,7 @@ def execute_vba_sync(
                 # Wrap code in Sub with error handling
                 wrapped_code = f"""Sub {final_proc_name}()
     On Error GoTo ErrorHandler
-    
+
 {clean_code}
 
     Exit Sub

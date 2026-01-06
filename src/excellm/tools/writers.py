@@ -93,7 +93,7 @@ def _verify_against_source(
     match_mode: str = "contains"
 ) -> Dict[str, Any]:
     """Verify that written data keys can be found in source column.
-    
+
     Args:
         worksheet: Excel worksheet COM object
         source_column: Column letter to verify against (e.g., "A")
@@ -101,7 +101,7 @@ def _verify_against_source(
         key_index: Index of the column containing the key (e.g., 0 for first column)
         start_row: Starting row number for the data
         match_mode: "contains" | "exact" | "regex"
-        
+
     Returns:
         Dictionary with verification results
     """
@@ -254,7 +254,7 @@ def write_cell_sync(
     dry_run: bool = False,
 ) -> Dict[str, Any]:
     """Write to a single cell.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -263,7 +263,7 @@ def write_cell_sync(
         force_overwrite: If True, overwrite existing data without checking
         activate: If True, activate the cell after writing
         dry_run: If True, validate without writing
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -338,7 +338,7 @@ def write_range_sync(
     abort_threshold: float = 0.0,
 ) -> Dict[str, Any]:
     """Write a 2D array of values to a range with safety verification.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -353,7 +353,7 @@ def write_range_sync(
             {"column": "A", "key_index": 0, "match_mode": "contains"}
         abort_threshold: Max allowed mismatch rate (default: 0.0 = 0%)
             If verification fails above this rate, write is aborted.
-        
+
     Returns:
         Dictionary with operation result and verification details
     """

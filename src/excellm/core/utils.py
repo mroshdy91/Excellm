@@ -10,10 +10,10 @@ from typing import Any, List, Optional, Tuple
 
 def normalize_address(addr: str) -> str:
     """Normalize Excel address by removing $ signs.
-    
+
     Args:
         addr: Excel address like "$A$1:$B$2" or "A1:B2"
-        
+
     Returns:
         Normalized address like "A1:B2"
     """
@@ -24,13 +24,13 @@ def normalize_address(addr: str) -> str:
 
 def column_to_number(col: str) -> int:
     """Convert Excel column letter to number (1-based).
-    
+
     Args:
         col: Column letter like "A", "Z", "AA"
-        
+
     Returns:
         Column number (1-based)
-        
+
     Examples:
         >>> column_to_number("A")
         1
@@ -47,13 +47,13 @@ def column_to_number(col: str) -> int:
 
 def number_to_column(n: int) -> str:
     """Convert column number to Excel letter (1-based).
-    
+
     Args:
         n: Column number (1-based)
-        
+
     Returns:
         Column letter like "A", "Z", "AA"
-        
+
     Examples:
         >>> number_to_column(1)
         'A'
@@ -72,10 +72,10 @@ def number_to_column(n: int) -> str:
 
 def parse_range_bounds(range_str: str) -> Tuple[int, int, int, int]:
     """Parse A1:B2 format range into row/col bounds.
-    
+
     Args:
         range_str: Range like "A1:Z99" or "A1"
-        
+
     Returns:
         Tuple of (start_row, start_col, end_row, end_col) - all 1-based
     """
@@ -106,10 +106,10 @@ def build_range_address(
     start_row: int, start_col: int, end_row: int, end_col: int
 ) -> str:
     """Build A1:B2 format range from row/col bounds.
-    
+
     Args:
         start_row, start_col, end_row, end_col: 1-based row/col numbers
-        
+
     Returns:
         Range string like "A1:B2"
     """
@@ -123,10 +123,10 @@ def build_range_address(
 
 def is_cell_empty(value: Any) -> bool:
     """Check if a cell value is empty.
-    
+
     Args:
         value: Cell value from Excel
-        
+
     Returns:
         True if cell is empty (None or empty string)
     """
@@ -139,11 +139,11 @@ def is_cell_empty(value: Any) -> bool:
 
 def safe_int(value: Any, default: int = 0) -> int:
     """Safely convert to int with default.
-    
+
     Args:
         value: Value to convert
         default: Default value if conversion fails
-        
+
     Returns:
         Integer value or default
     """
@@ -155,11 +155,11 @@ def safe_int(value: Any, default: int = 0) -> int:
 
 def safe_bool(value: Any, default: bool = False) -> bool:
     """Safely convert to bool with default.
-    
+
     Args:
         value: Value to convert
         default: Default value if conversion fails
-        
+
     Returns:
         Boolean value or default
     """
@@ -171,11 +171,11 @@ def safe_bool(value: Any, default: bool = False) -> bool:
 
 def compute_density(non_empty: int, total: int) -> Optional[float]:
     """Compute density ratio.
-    
+
     Args:
         non_empty: Number of non-empty cells
         total: Total cells
-        
+
     Returns:
         Density 0..1 or None if total is 0
     """
@@ -186,10 +186,10 @@ def compute_density(non_empty: int, total: int) -> Optional[float]:
 
 def get_cell_type(value: Any) -> str:
     """Determine the type of a cell value.
-    
+
     Args:
         value: Cell value
-        
+
     Returns:
         Type string: "string", "number", "boolean", "date", "empty", "error"
     """
@@ -229,10 +229,10 @@ PRIORITY_SHEET_PATTERNS = [
 
 def sheet_name_priority_boost(name: str) -> float:
     """Compute priority boost based on sheet name.
-    
+
     Args:
         name: Sheet name
-        
+
     Returns:
         Boost value 0..0.2
     """
@@ -251,14 +251,14 @@ def generate_sample_positions(
     max_tiles: int = 12, probes_per_tile: int = 3
 ) -> List[Tuple[int, int]]:
     """Generate sample cell positions for quick scanning.
-    
+
     Uses a tile grid approach to sample cells across the range.
-    
+
     Args:
         start_row, start_col, end_row, end_col: Range bounds (1-based)
         max_tiles: Maximum tiles per dimension
         probes_per_tile: Number of probes per tile
-        
+
     Returns:
         List of (row, col) positions to probe
     """

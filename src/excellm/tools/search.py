@@ -28,7 +28,7 @@ def search_sync(
     max_rows: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Search and filter Excel data.
-    
+
     Args:
         workbook_name: Name of open workbook
         filters: Filter specification (string for simple search, dict for complex)
@@ -37,7 +37,7 @@ def search_sync(
         has_header: If True, first row contains headers
         all_sheets: If True, search all sheets
         max_rows: Maximum rows to return (prevents token explosion)
-        
+
     Returns:
         Dictionary with filtered data and metadata
     """

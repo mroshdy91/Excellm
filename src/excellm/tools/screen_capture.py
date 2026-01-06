@@ -21,17 +21,17 @@ def capture_sheet_sync(
     output_path: str = None,
 ) -> dict:
     """Capture screenshot of Excel sheet or range.
-    
+
     Uses Excel's CopyPicture method to capture the visual representation
     of cells including formatting, colors, borders, etc.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         range_ref: Specific range to capture (None = entire UsedRange)
         output_format: "base64" (default) or "file"
         output_path: File path if output_format is "file"
-        
+
     Returns:
         Dictionary with:
         {
@@ -43,7 +43,7 @@ def capture_sheet_sync(
             "range_captured": "A1:H20",
             "sheet_name": "Sheet1"
         }
-        
+
     Raises:
         ToolError: If capture fails
     """

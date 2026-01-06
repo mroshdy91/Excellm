@@ -38,13 +38,13 @@ def create_table_sync(
     table_style: str = "medium2",
 ) -> dict:
     """Create an Excel Table (ListObject) from a range.
-    
+
     Excel Tables provide:
     - Automatic formatting
     - Built-in filtering
     - Structured references
     - Easy expansion when adding data
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -53,7 +53,7 @@ def create_table_sync(
         has_headers: Whether first row contains headers (default: True)
         table_style: Style name - use shortcuts like "medium2" or full name 
                     like "TableStyleMedium2" (default: "medium2")
-        
+
     Returns:
         Dictionary with:
         {
@@ -66,7 +66,7 @@ def create_table_sync(
             "style": "TableStyleMedium2",
             "headers": ["Name", "Date", "Amount", "Status"]
         }
-        
+
     Raises:
         ToolError: If table creation fails
     """
@@ -200,11 +200,11 @@ def list_tables_sync(
     sheet_name: str = None,
 ) -> dict:
     """List all tables in a workbook or specific sheet.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Optional - specific sheet (None = all sheets)
-        
+
     Returns:
         Dictionary with list of tables
     """
@@ -268,13 +268,13 @@ def delete_table_sync(
     keep_data: bool = True,
 ) -> dict:
     """Delete an Excel Table, optionally keeping the data.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         table_name: Name of table to delete
         keep_data: If True, convert to normal range; if False, delete data too
-        
+
     Returns:
         Dictionary with operation result
     """

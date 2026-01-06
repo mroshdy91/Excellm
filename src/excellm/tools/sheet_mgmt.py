@@ -29,14 +29,14 @@ def insert_sync(
     count: int = 1,
 ) -> Dict[str, Any]:
     """Insert rows or columns at a specific position.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         insert_type: "row" or "column"
         position: Row number or column letter/number
         count: Number of rows/columns to insert
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -111,14 +111,14 @@ def delete_sync(
     count: int = 1,
 ) -> Dict[str, Any]:
     """Delete rows or columns at a specific position.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
         delete_type: "row" or "column"
         position: Row number or column letter/number (e.g., "5", "5:10", "C", "C:E")
         count: Number of rows/columns to delete (ignored if range specified)
-        
+
     Returns:
         Dictionary with operation result
     """
@@ -204,7 +204,7 @@ def manage_sheet_sync(
     reference_sheet: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Manage worksheets in an open Excel workbook.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Single sheet name for add/remove/copy/move/single operation
@@ -215,7 +215,7 @@ def manage_sheet_sync(
         target_name: For copy/move/rename, new name for the sheet
         position: For copy/move, "before" or "after" for positioning
         reference_sheet: For copy/move, sheet to position before/after
-        
+
     Returns:
         Dictionary with operation result
     """

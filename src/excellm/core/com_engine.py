@@ -13,7 +13,7 @@ from .errors import ErrorCodes, ToolError
 
 class COMEngine(ExcelEngine):
     """Windows COM automation engine using pywin32.
-    
+
     Requires:
     - Windows OS
     - Excel running

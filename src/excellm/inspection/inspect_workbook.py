@@ -39,12 +39,12 @@ XL_CELL_TYPE_CONSTANTS = 2
 
 def inspect_workbook_sync() -> Dict[str, Any]:
     """Synchronous implementation of inspect_workbook.
-    
+
     Connects to running Excel and inspects all sheets in the active workbook.
-    
+
     Returns:
         Dictionary matching InspectWorkbookResult schema
-        
+
     Raises:
         Exception if Excel not running or no workbook open
     """
@@ -130,11 +130,11 @@ def inspect_workbook_sync() -> Dict[str, Any]:
 
 def _inspect_sheet(ws, app) -> SheetIndex:
     """Inspect a single worksheet.
-    
+
     Args:
         ws: Excel Worksheet COM object
         app: Excel Application COM object
-        
+
     Returns:
         SheetIndex with sheet metadata
     """
@@ -232,12 +232,12 @@ def _inspect_sheet(ws, app) -> SheetIndex:
 
 def _get_layout_flags(ws, used_range, app) -> LayoutFlags:
     """Get layout-related flags for a worksheet.
-    
+
     Args:
         ws: Worksheet COM object
         used_range: UsedRange COM object
         app: Application COM object
-        
+
     Returns:
         LayoutFlags with detected features
     """
@@ -329,14 +329,14 @@ def _compute_sheet_flags(
     layout: LayoutFlags,
 ) -> List[str]:
     """Compute flags for a sheet.
-    
+
     Args:
         state: Sheet visibility state
         total_rows: Total rows in UsedRange
         total_cols: Total columns in UsedRange
         data_cell_count: Approximated data cell count
         layout: Layout flags
-        
+
     Returns:
         List of flag strings
     """
@@ -398,14 +398,14 @@ def _compute_priority(
     flags: List[str],
 ) -> float:
     """Compute priority score for a sheet.
-    
+
     Args:
         state: Sheet visibility
         name: Sheet name
         data_cell_count: Data cell count
         layout: Layout flags
         flags: Computed flags
-        
+
     Returns:
         Priority score 0..1
     """
@@ -451,11 +451,11 @@ def _compute_recommendations(
     sheets: List[SheetIndex], active_sheet_name: str
 ) -> Recommendations:
     """Compute recommendations based on sheet analysis.
-    
+
     Args:
         sheets: List of inspected sheets
         active_sheet_name: Currently active sheet name
-        
+
     Returns:
         Recommendations object
     """

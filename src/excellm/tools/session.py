@@ -56,10 +56,10 @@ def create_transform_session_sync(
     verify_key_index: int = 0,
 ) -> Dict[str, Any]:
     """Create a new transformation session.
-    
+
     The session tracks progress and allows processing data in chunks.
     Server maintains state so LLM doesn't need to track row numbers.
-    
+
     Args:
         workbook_name: Name of open workbook
         sheet_name: Name of worksheet
@@ -69,7 +69,7 @@ def create_transform_session_sync(
         end_row: Last data row (None = auto-detect from UsedRange)
         chunk_size: Rows per chunk (default: 25)
         verify_key_index: Index of output column to verify against source
-        
+
     Returns:
         Dictionary with session_id, total_rows, chunk_size, first_chunk_data
     """
@@ -172,7 +172,7 @@ def create_parallel_sessions_sync(
     verify_key_index: int = 0,
 ) -> Dict[str, Any]:
     """Create multiple parallel sessions for faster processing of large datasets.
-    
+
     Use when:
     - Dataset is large (>500 rows) 
     - You want to spawn multiple subagents to process in parallel
@@ -312,14 +312,14 @@ def process_chunk_sync(
     data: List[List[Any]],
 ) -> Dict[str, Any]:
     """Process a chunk of transformed data.
-    
+
     The server knows which rows to write based on session state.
     Verifies data against source column before writing.
-    
+
     Args:
         session_id: Session ID from create_transform_session
         data: LLM's transformed data for current chunk (2D array)
-        
+
     Returns:
         Dictionary with rows_written, verification, remaining, next_chunk_data
     """
@@ -468,12 +468,12 @@ def process_chunk_sync(
 
 def get_session_status_sync(session_id: str) -> Dict[str, Any]:
     """Get the status of an existing session.
-    
+
     Use this to check progress or resume an interrupted session.
-    
+
     Args:
         session_id: Session ID to check
-        
+
     Returns:
         Dictionary with session status and progress
     """

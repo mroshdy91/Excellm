@@ -29,7 +29,7 @@ class ExcelEngine(ABC):
     @abstractmethod
     def list_workbooks(self) -> List[Dict[str, Any]]:
         """List all available workbooks.
-        
+
         Returns:
             List of workbook info dictionaries
         """
@@ -43,12 +43,12 @@ class ExcelEngine(ABC):
         range_ref: str,
     ) -> List[List[Any]]:
         """Read a range of cells.
-        
+
         Args:
             workbook_path: Path or name of workbook
             sheet_name: Name of worksheet
             range_ref: Range reference (e.g., "A1:C5")
-            
+
         Returns:
             2D list of cell values
         """
@@ -63,13 +63,13 @@ class ExcelEngine(ABC):
         data: List[List[Any]],
     ) -> Dict[str, Any]:
         """Write data to a range of cells.
-        
+
         Args:
             workbook_path: Path or name of workbook
             sheet_name: Name of worksheet
             range_ref: Range reference (e.g., "A1:C5")
             data: 2D list of values to write
-            
+
         Returns:
             Dictionary with operation result
         """
@@ -78,10 +78,10 @@ class ExcelEngine(ABC):
     @abstractmethod
     def get_sheet_names(self, workbook_path: str) -> List[str]:
         """Get all sheet names in a workbook.
-        
+
         Args:
             workbook_path: Path or name of workbook
-            
+
         Returns:
             List of sheet names
         """
@@ -94,11 +94,11 @@ class ExcelEngine(ABC):
         sheet_name: str,
     ) -> Dict[str, Any]:
         """Create a new worksheet.
-        
+
         Args:
             workbook_path: Path or name of workbook
             sheet_name: Name for new sheet
-            
+
         Returns:
             Dictionary with operation result
         """
@@ -111,11 +111,11 @@ class ExcelEngine(ABC):
         sheet_name: str,
     ) -> Dict[str, Any]:
         """Delete a worksheet.
-        
+
         Args:
             workbook_path: Path or name of workbook
             sheet_name: Name of sheet to delete
-            
+
         Returns:
             Dictionary with operation result
         """
@@ -130,7 +130,7 @@ class ExcelEngine(ABC):
         **kwargs
     ) -> Dict[str, Any]:
         """Execute VBA code (COM engine only).
-        
+
         Raises:
             NotImplementedError: If engine doesn't support VBA
         """
@@ -143,7 +143,7 @@ class ExcelEngine(ABC):
         **kwargs
     ) -> Dict[str, Any]:
         """Capture sheet screenshot (COM engine only).
-        
+
         Raises:
             NotImplementedError: If engine doesn't support screen capture
         """
@@ -179,11 +179,11 @@ class EngineFactory:
         workbook_path: str = None,
     ) -> ExcelEngine:
         """Create the most appropriate engine for the context.
-        
+
         Args:
             prefer_live: Prefer live Excel if available
             workbook_path: Path to workbook (helps determine if file-based is needed)
-            
+
         Returns:
             ExcelEngine instance (COMEngine or FileEngine)
         """

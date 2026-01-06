@@ -28,7 +28,7 @@ def log_write(
     dry_run: bool = False,
 ) -> None:
     """Log a write operation for auditing.
-    
+
     Args:
         tool: Tool name (e.g., "write_range", "write_cell")
         workbook: Workbook name
@@ -49,7 +49,7 @@ def log_vba(
     success: bool,
 ) -> None:
     """Log VBA execution for auditing.
-    
+
     Args:
         workbook: Workbook name
         procedure: VBA procedure name

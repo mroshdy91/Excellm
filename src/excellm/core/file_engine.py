@@ -20,12 +20,12 @@ from .errors import ErrorCodes, ToolError
 
 class FileEngine(ExcelEngine):
     """File-based Excel engine using openpyxl.
-    
+
     Features:
     - Cross-platform (Windows, Mac, Linux)
     - No Excel required
     - Supports .xlsx, .xlsm, .xltx, .xltm
-    
+
     Limitations:
     - No VBA execution
     - No screen capture
@@ -89,10 +89,10 @@ class FileEngine(ExcelEngine):
 
     def _parse_range(self, range_ref: str) -> Tuple[int, int, int, int]:
         """Parse Excel range reference to (start_row, start_col, end_row, end_col).
-        
+
         Args:
             range_ref: Range like "A1:C5" or "B2"
-            
+
         Returns:
             Tuple of (start_row, start_col, end_row, end_col) - 1-indexed
         """
